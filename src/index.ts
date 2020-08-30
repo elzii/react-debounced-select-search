@@ -1,5 +1,6 @@
-import { ComponentType } from 'react'
+// import { ComponentType } from 'react'
 export { Select }  from './Select'
+export { createCSSTheme } from './Styles'
 
 
 // export interface OptionTypeBase {
@@ -42,6 +43,7 @@ export interface IOption {
 
 
 export interface SelectProps {
+  className?: string
   placeholder?: string
   getOptions: (query: string) => Promise<any>
   onInputChange?: (value: string) => void

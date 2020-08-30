@@ -1,6 +1,6 @@
 import * as React from 'react'
 import cx from 'classnames'
-import s from '../styles.module.css'
+// import s from '../styles.module.css'
 
 interface Props {
   // [key: string]: any
@@ -20,7 +20,7 @@ interface Props {
 export const Popover = React.forwardRef<HTMLDivElement, Props>((props, forwardedRef) => {  
 
   return <div 
-    className={cx(s['popper-dropdown'])}
+    className={cx('popper-dropdown')}
     ref={forwardedRef} 
     style={{
       ...props.styles.popper,
@@ -28,7 +28,7 @@ export const Popover = React.forwardRef<HTMLDivElement, Props>((props, forwarded
     }} 
     {...props.attributes.popper}
   >
-    <div className={cx(s['popper-dropdown__list'])}>
+    <div className={cx('popper-dropdown__list')}>
       {
         props.children
       }

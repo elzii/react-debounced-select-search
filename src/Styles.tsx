@@ -1,7 +1,29 @@
 import * as React from 'react'
 import styled from 'styled-components'
 
-export const Styles = styled.div`
+
+export const createCSSTheme = (props?: any) => {
+  return `
+    --select-input-padding: 1rem;
+    --select-input-border-radius: 4px;
+    --select-input-font-size: 1.2rem;
+    --select-input-border-color: rgba(0,0,0, 0.35);
+    --select-input-focus-color: rgba(63,160,251,1);
+    --select-input-icon-width: 56px;
+    --select-input-max-width: 500px;
+    --select-input-option-background-color: #f3f3f3;
+    --select-input-option-background-color-hover: rgba(63,160,251,1);
+    --select-input-option-active-background-color-hover: rgba(63,160,251,0.50);
+    --select-input-option-color: inherit;
+    --select-input-option-color-hover: white;
+    --select-input-chip-background-color: rgba(0,0,0, 0.10);
+  `
+}
+
+
+export const Styles = styled('div')`
+  ${createCSSTheme()}
+
   .select, .select *, .select *:before, .select *:after {
     box-sizing: border-box;
     font-family: 'Netflix Sans', sans-serif;

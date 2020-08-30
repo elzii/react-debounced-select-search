@@ -11,26 +11,27 @@
     "build": "tsdx build",
     "test": "tsdx test --passWithNoTests",
     "lint": "tsdx lint",
-    "prepare": "tsdx build"
+    "prepare": "tsdx build",
+    "clean": "rimraf ./dist ./tmp ./example/dist"
   },
   "bugs": {
     "url": "https://github.com/elzii/react-debounced-select-search/issues"
   },
   "homepage": "https://github.com/elzii/react-debounced-select-search#readme",
-  "files": [
-    "dist",
-    "src"
-  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/elzii/react-debounced-select-search.git"
   },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "module": "dist/react-debounced-select-search.esm.js",
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=10"
-  },
-  
-  "peerDependencies": {
-    "react": ">=16"
   },
   "husky": {
     "hooks": {
@@ -43,7 +44,9 @@
     "singleQuote": true,
     "trailingComma": "es5"
   },
-  "module": "dist/react-debounced-select-search.esm.js",
+  "peerDependencies": {
+    "react": ">=16"
+  },
   "dependencies": {
     "@popperjs/core": "^2.4.4",
     "classnames": "^2.2.6",

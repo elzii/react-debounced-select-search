@@ -1,6 +1,5 @@
 import * as React from 'react'
 import cx from 'classnames'
-// import styled from 'styled-components'
 import {
   useTable,
   useResizeColumns,
@@ -8,13 +7,10 @@ import {
   // useRowSelect,
   useSortBy
 } from 'react-table'
-import { Row as RowType } from 'react-table/index'
+
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import { DndProvider } from 'react-dnd'
-import { DragCard } from './DragCard'
-
-
-import s from '../styles.module.css'
+import { SortableListItem } from './SortableListItem'
 
 
 // const headerProps = (props: any, { column }: any) => getStyles(props, column.align)
@@ -30,34 +26,6 @@ import s from '../styles.module.css'
 //   },
 // ]
 
-
-export function RowComponent({ row, index, moveRow, ...props }:{ row: RowType, index: number, moveRow: any }) {
-
-  const item: any = row.original
-  const key = `draggable-row-${item.id}`
-
-  return (
-  <DragCard 
-    key={row.id}
-    index={index}
-    id={row.id}
-    moveCard={moveRow}
-    className={s['popper-dropdown__list-item']}
-    {...props}
-  >
-    <div className={cx(s['popper-dropdown__list-item-drag-handle'])}>☰</div>
-    {row.cells.map((cell: any, i: number) => {
-      return (
-        <div className={s['popper-dropdown__list-item-content']} {...cell.getCellProps()} >
-          {
-            cell.render('Cell')
-          }
-        </div>
-      )
-    })}
-  </DragCard>
-  )
-}
 
 
 
@@ -96,10 +64,10 @@ export function SortableList({ columns, data, onRemoveItem, onReorder }:{ column
           minWidth: 24,
           Cell: ({ row }) => {
             return (
-              <div className={s['popper-dropdown__list-item-actions']}>
+              <div className={'popper-dropdown__list-item-actions'}>
                 <button 
                   tabIndex={-1}
-                  className={cx(s['popper-dropdown__list-item-action'])} 
+                  className={cx('popper-dropdown__list-item-action')} 
                   type="button" 
                   onClick={() => onRemoveItem(row.original)}
                 >
@@ -119,7 +87,7 @@ export function SortableList({ columns, data, onRemoveItem, onReorder }:{ column
     <DndProvider backend={HTML5Backend}>
       <div {...getTableProps()} className="">
         {headerGroups.map(headerGroup => (
-          <div className={s['popper-dropdown__list-header']} 
+          <div className={'popper-dropdown__list-header'} 
             {...headerGroup.getHeaderGroupProps()}
           >
             {headerGroup.headers.map(column => (
@@ -142,7 +110,7 @@ export function SortableList({ columns, data, onRemoveItem, onReorder }:{ column
         {rows.map((row,index) => {
           // @ts-ignore
           return prepareRow(row) || (
-            <RowComponent
+            <SortableListItem
               index={index}
               row={row}
               moveRow={onReorder}

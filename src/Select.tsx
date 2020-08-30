@@ -19,11 +19,8 @@ import { IOption, StatusIdle, StatusLoading, StatusError, SelectProps } from './
 import log from './util/pretty-console-logger'
 import { escapeRegExp } from './util/misc'
 
-import './variables.css'
+// import './variables.css'
 import Styled from './Styles'
-
-
-
 
 export const KEY_CODES = {
   UP: 38,
@@ -47,7 +44,7 @@ export const STATUS_TYPES = {
 }
 
 
-export const Select: React.SFC<SelectProps> = (props) => {
+export const Select: React.FC<SelectProps> = (props) => {
 
   const { onInputChange, onSelectedChange } = props
 
@@ -421,7 +418,10 @@ export const Select: React.SFC<SelectProps> = (props) => {
                     props.showSuggestion
                   ) {
 
-                    log('▷ TAB', 'key')('SELECT_SUGGESTED', `Suggested Value:`, suggestedValue, `Suggested Index:`, suggestedIndex)
+                    log('▷ TAB', 'key')('SELECT_SUGGESTED', 
+                      `Suggested Value:`, suggestedValue, 
+                      `Suggested Index:`, suggestedIndex
+                    )
 
                     setSelected((prev: any) => [
                       ...prev,
@@ -490,7 +490,7 @@ export const Select: React.SFC<SelectProps> = (props) => {
   // RENDER
   return (
     <Styled>
-    <div className="select" style={{}}>
+    <div className={cx('select', props.className)} style={{}}>
       
       <div className="select-input-container">
         <div ref={chipsRef} className="select-input-chips">
@@ -595,5 +595,6 @@ Select.defaultProps = {
   showSuggestion: true,
   width: 500,
   debugPortal: false,
-  focusInputAfterRemovingSelectedItem: true
+  focusInputAfterRemovingSelectedItem: true,
+  className: ''
 }

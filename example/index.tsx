@@ -1,7 +1,8 @@
 import 'react-app-polyfill/ie11';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { Select } from '../.';
+import { Select,  createCSSTheme } from '../.';
+import { css } from 'emotion'
 
 import './index.css'
 
@@ -26,6 +27,8 @@ const getCocktails = async (query: string) => {
   }))
 }
 
+
+const theme = createCSSTheme()
 
 const CustomOption = ({ item, className, style, onClick, ...props }: any) => {
   return <div className={'select-option'} onClick={onClick} >
@@ -58,27 +61,35 @@ const App = () => {
   const onInputChange = (x: any) => console.log('onInputChange', x)
 
   React.useEffect(() => {
-    console.log(selectRef.current)
+    console.log('theme', theme)
   }, [selectRef])
 
   return (
     <div className="App">
-      <Select
-        getOptions={getCocktails}
-        placeholder={'Search cocktails'}
-        selected={[]}
-        // components={{
-        //   Option: CustomOption
-        // }}
-        showSuggestion={true}
-        onSelectedChange={onSelectedChange}
-        onInputChange={onInputChange}
-        tabBehavior={'SELECT_HIGHLIGHTED_OPTION'}
-        // deleteBehavior={null}
-        debugPortal={true}
-      />
+      <div className={css`
+        .CustomSelect {
+          --select-input-option-background-color: #f3f3f3;
+          --select-input-option-background-color-hover: #ff0000;
+          --select-input-option-active-background-color-hover: #ffff00;
+        }
+      `}>
+        <Select
+          getOptions={getCocktails}
+          className={'CustomSelect'}
+          placeholder={'Search cocktails'}
+          selected={[]}
+          showSuggestion={true}
+          onSelectedChange={onSelectedChange}
+          onInputChange={onInputChange}
+          tabBehavior={'SELECT_HIGHLIGHTED_OPTION'}
+          debounceTimeout={0}
+          deleteBehavior={'REMOVE_LAST_SELECTED_ON_EMPTY'}
+          // components={{
+          //   Option: CustomOption
+          // }}
+        />
+      </div>
     </div>
-
   )
 }
 
