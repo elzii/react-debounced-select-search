@@ -6,13 +6,6 @@
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
-  "files": [
-    "dist",
-    "src"
-  ],
-  "engines": {
-    "node": ">=10"
-  },
   "scripts": {
     "start": "tsdx watch",
     "build": "tsdx build",
@@ -20,6 +13,22 @@
     "lint": "tsdx lint",
     "prepare": "tsdx build"
   },
+  "bugs": {
+    "url": "https://github.com/elzii/react-debounced-select-search/issues"
+  },
+  "homepage": "https://github.com/elzii/react-debounced-select-search#readme",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/elzii/react-debounced-select-search.git"
+  },
+  "engines": {
+    "node": ">=10"
+  },
+  
   "peerDependencies": {
     "react": ">=16"
   },
