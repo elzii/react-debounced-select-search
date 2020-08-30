@@ -491,7 +491,6 @@ export const Select: React.FC<SelectProps> = (props) => {
   return (
     <Styled>
     <div className={cx('select', props.className)} style={{}}>
-      
       <div className="select-input-container">
         <div ref={chipsRef} className="select-input-chips">
           {

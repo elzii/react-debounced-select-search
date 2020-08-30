@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 const postcss = require('rollup-plugin-postcss');
-const cssvariables = require("postcss-css-variables");
+// const cssvariables = require("postcss-css-variables");
 const postcssNesting = require("postcss-nesting");
 const autoprefixer = require('autoprefixer');
 const cssnano = require('cssnano');

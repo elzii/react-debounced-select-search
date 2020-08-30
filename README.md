@@ -1,5 +1,4 @@
-React Debounced Select Search
-==============================
+![Header](https://github.com/elzii/react-debounced-select-search/raw/master/media/Banner.png)
 
 ### Getting Started
 `npm i @zizzo/react-debounced-select-search`
