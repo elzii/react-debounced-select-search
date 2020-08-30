@@ -1,0 +1,74 @@
+import { ComponentType } from 'react'
+export { Select }  from './Select'
+
+
+// export interface OptionTypeBase {
+//   [key: string]: any
+// }
+// export type OptionType = { [key: string]: any }
+// export type OptionsType<OptionType extends OptionTypeBase> = ReadonlyArray<OptionType>
+// export interface GroupType<OptionType extends OptionTypeBase> {
+//   options: OptionsType<OptionType>
+//   [key: string]: any
+// }
+// export type ValueType<OptionType extends OptionTypeBase> = OptionType | OptionsType<OptionType> | null | undefined
+// export type ComponentsProps = { [key in string]: any }
+// export type SelectComponentsConfig<OptionType extends OptionTypeBase> = Partial<SelectComponents<OptionType>>
+// export interface SelectComponents<OptionType extends OptionTypeBase> {
+//   Options?: ComponentType<OptionType>
+//   Option?: ComponentType<OptionType>
+//   IconLoading?: ComponentType<OptionType>
+//   IconSearch?: ComponentType<OptionType>
+// }
+
+export interface IComponents {
+  Options?: (props: any) => React.ReactElement
+  Option?: (props: any) => React.ReactElement
+  IconLoading?: (props: any) => React.ReactElement
+  IconSearch?: (props: any) => React.ReactElement
+}
+
+export type StatusIdle = 'IDLE'
+export type StatusLoading = 'LOADING'
+export type StatusError = 'ERROR'
+export type StatusType = StatusIdle | StatusLoading | StatusError | string
+
+export interface IOption {
+  name: string,
+  value: any,
+  id: string | number,
+  [key: string]: any
+}
+
+
+export interface SelectProps {
+  placeholder?: string
+  getOptions: (query: string) => Promise<any>
+  onInputChange?: (value: string) => void
+  onSelectedChange?: (value: string) => void
+  onSelect?: (item: any, selected: any[]) => void
+  components?: IComponents
+  autoFocus?: boolean
+  debounce?: boolean
+  debounceTimeout?: number
+  cycleOptions?: boolean
+  selected?: IOption[]
+  inlineChips?: boolean
+  tabBehavior?: TabBehavior | TabBehavior[]
+  deleteBehavior?: DeleteBehavior | DeleteBehavior[]
+  showSuggestion?: boolean
+  width?: number
+  debugPortal?: boolean
+  focusInputAfterRemovingSelectedItem?: boolean
+}
+
+
+export type TabBehavior =
+  | 'SELECT_SUGGESTED'
+  | 'SEARCH_SUGGESTED'
+  | 'SELECT_FIRST_OPTION'
+  | 'SELECT_HIGHLIGHTED_OPTION'
+
+export type DeleteBehavior =
+  | 'REMOVE_LAST_SELECTED_ON_EMPTY'
+  | null

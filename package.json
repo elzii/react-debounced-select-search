@@ -1,0 +1,68 @@
+{
+  "name": "@zizzo/react-debounced-select-search",
+  "author": "Alexander Zizzo",
+  "description": "Like react-select, but worse, yet easier to reason about.",
+  "version": "0.1.0",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "engines": {
+    "node": ">=10"
+  },
+  "scripts": {
+    "start": "tsdx watch",
+    "build": "tsdx build",
+    "test": "tsdx test --passWithNoTests",
+    "lint": "tsdx lint",
+    "prepare": "tsdx build"
+  },
+  "peerDependencies": {
+    "react": ">=16"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "tsdx lint"
+    }
+  },
+  "prettier": {
+    "printWidth": 80,
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "es5"
+  },
+  "module": "dist/react-debounced-select-search.esm.js",
+  "dependencies": {
+    "@popperjs/core": "^2.4.4",
+    "classnames": "^2.2.6",
+    "compute-scroll-into-view": "^1.0.14",
+    "immutability-helper": "^3.1.1",
+    "react-dnd": "^11.1.3",
+    "react-dnd-html5-backend": "^11.1.3",
+    "react-popper": "^2.2.3",
+    "react-table": "^7.5.0",
+    "styled-components": "^5.1.1"
+  },
+  "devDependencies": {
+    "@types/classnames": "^2.2.10",
+    "@types/react": "^16.9.48",
+    "@types/react-beautiful-dnd": "^13.0.0",
+    "@types/react-dom": "^16.9.8",
+    "@types/react-table": "^7.0.22",
+    "@types/styled-components": "^5.1.2",
+    "autoprefixer": "^9.8.6",
+    "cssnano": "^4.1.10",
+    "husky": "^4.2.5",
+    "postcss-css-variables": "^0.17.0",
+    "postcss-nesting": "^7.0.1",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "rollup-plugin-postcss": "^3.1.6",
+    "tsdx": "^0.13.3",
+    "tslib": "^2.0.1",
+    "typescript": "^4.0.2"
+  }
+}
