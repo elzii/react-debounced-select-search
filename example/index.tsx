@@ -74,7 +74,7 @@ const App = () => {
       <div className={css`
         .CustomSelect {
           width: 500px;
-          --select-input-max-width: 500px;
+          --select-input-max-width: none;
           --select-input-padding: 0.60rem;
           --select-input-icon-container-width: 40px;
           --select-input-font-size: 0.90rem;

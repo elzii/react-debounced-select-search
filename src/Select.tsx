@@ -75,8 +75,8 @@ export const Select: React.FC<SelectProps> = (props) => {
 
   const chips = React.useMemo(() => {
     // Rollup if more than 1
-    if (selected.length > 2) {
-      const others: IChip[] = selected.slice(0, selected.length - 2)
+    if (selected.length > 1) {
+      const others: IChip[] = selected.slice(0, selected.length - 1)
       const rollup: IChipRollup = {
         type: 'rollup',
         count: others.length,
