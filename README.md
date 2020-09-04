@@ -1,5 +1,10 @@
 ![Header](https://github.com/elzii/react-debounced-select-search/raw/master/media/Banner.png)
 
+<img src="https://github.com/elzii/react-debounced-select-search/raw/master/media/Screenshot.png" width="500">
+
+### Demo
+[Codesandbox Demo](https://codesandbox.io/s/demo-react-debounced-select-search-le3pv)
+
 ### Getting Started
 `npm i @zizzo/react-debounced-select-search`
 
