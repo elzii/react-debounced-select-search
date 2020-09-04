@@ -1,17 +1,20 @@
 :root {
   --select-input-padding: 1rem;
-  --select-input-border-radius: 4px;
-  --select-input-font-size: 1.2rem;
-  --select-input-border-color: rgba(0,0,0, 0.35);
-  /*--select-input-focus-color: #3FA0FB;*/
-  --select-input-focus-color: rgba(63,160,251,1);
-  --select-input-icon-width: 56px;
-  --select-input-max-width: 500px;
-  --select-input-option-background-color: #f3f3f3;
-  --select-input-option-background-color-hover: rgba(63,160,251,1);
-  --select-input-option-active-background-color-hover: rgba(63,160,251,0.50);
-  --select-input-option-color: inherit;
-  --select-input-option-color-hover: white;
-
-  --select-input-chip-background-color: rgba(0,0,0, 0.10);
+    --select-input-border-radius: 4px;
+    --select-input-font-size: 1.2rem;
+    --select-input-font-color: rgba(15,15,15, 0.80);
+    --select-input-placeholder-font-size: 1.2rem;
+    --select-input-border-color: rgba(0,0,0, 0.35);
+    --select-input-focus-color: rgba(63,160,251,1);
+    --select-input-icon-container-width: 56px;
+    --select-input-max-width: 500px;
+    --select-input-option-background-color: #f3f3f3;
+    --select-input-option-background-color-hover: rgba(63,160,251,1);
+    --select-input-option-active-background-color-hover: rgba(63,160,251,0.50);
+    --select-input-option-color: inherit;
+    --select-input-option-color-hover: white;
+    --select-input-chip-background-color: rgba(0,0,0, 0.10);
+    --select-input-chip-border-color: rgba(0,0,0, 0.07);
+    --select-input-chip-font-size: 0.9rem;
+    --select-input-chip-font-color: rgba(106,106,106, 1.0);
 }

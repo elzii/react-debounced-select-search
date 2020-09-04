@@ -1,10 +1,16 @@
 // import { ComponentType } from 'react'
 // export { Select }  from './Select'
+import { IconLoading } from './icons/Loading.svg'
+import { IconSearch } from './icons/Search.svg'
+import { IconDelete } from './icons/Delete.svg'
 import { Select } from './Select'
 export { createCSSTheme } from './Styles'
 
 export {
-  Select
+  Select,
+  IconLoading,
+  IconSearch,
+  IconDelete,
 }
 
 export default Select
@@ -49,9 +55,9 @@ export interface IOption {
   [key: string]: any
 }
 
-
 export interface SelectProps {
   className?: string
+  style?: React.CSSProperties
   placeholder?: string
   getOptions: (query: string) => Promise<any>
   onInputChange?: (value: string) => void
@@ -70,6 +76,7 @@ export interface SelectProps {
   width?: number
   debugPortal?: boolean
   focusInputAfterRemovingSelectedItem?: boolean
+  chipsOffset?: number
 }
 
 

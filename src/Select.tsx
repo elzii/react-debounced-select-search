@@ -75,8 +75,8 @@ export const Select: React.FC<SelectProps> = (props) => {
 
   const chips = React.useMemo(() => {
     // Rollup if more than 1
-    if (selected.length > 1) {
-      const others: IChip[] = selected.slice(0, selected.length - 1)
+    if (selected.length > 2) {
+      const others: IChip[] = selected.slice(0, selected.length - 2)
       const rollup: IChipRollup = {
         type: 'rollup',
         count: others.length,
@@ -138,7 +138,8 @@ export const Select: React.FC<SelectProps> = (props) => {
 
     let xOffset = rect.x - parentRect.x
 
-    setChipsWidth(rect.width + (xOffset - 10))
+    // setChipsWidth(rect.width + (xOffset - 10))
+    setChipsWidth(rect.width + (xOffset - (props.chipsOffset ? props.chipsOffset : 0)))
   }, [selected, chipsRef])
 
   const getSuggestedValue = React.useCallback(() => {
@@ -490,7 +491,7 @@ export const Select: React.FC<SelectProps> = (props) => {
   // RENDER
   return (
     <Styled>
-    <div className={cx('select', props.className)} style={{}}>
+    <div className={cx('select', props.className)} style={{ ...props.style }}>
       <div className="select-input-container">
         <div ref={chipsRef} className="select-input-chips">
           {
@@ -595,5 +596,6 @@ Select.defaultProps = {
   width: 500,
   debugPortal: false,
   focusInputAfterRemovingSelectedItem: true,
-  className: ''
+  className: '',
+  chipsOffset: 8
 }

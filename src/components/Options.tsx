@@ -18,7 +18,7 @@ export const Option: React.SFC<OptionProps> = ({ item, className, style, onClick
       </div>
       <div>
         <div>
-          <span>{item.name}</span>
+          <div style={{ marginBottom: 2 }}>{item.name}</div>
         </div>
         <div style={{ fontSize: 12, opacity: 0.75, margin: '2px -4px' }}>
             {

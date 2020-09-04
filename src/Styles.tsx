@@ -7,9 +7,12 @@ export const createCSSTheme = (props?: any) => {
     --select-input-padding: 1rem;
     --select-input-border-radius: 4px;
     --select-input-font-size: 1.2rem;
+    --select-input-font-color: rgba(15,15,15, 0.80);
+    --select-input-placeholder-font-size: 1.2rem;
     --select-input-border-color: rgba(0,0,0, 0.35);
-    --select-input-focus-color: rgba(63,160,251,1);
-    --select-input-icon-width: 56px;
+    --select-input-focus-border-color: rgba(63,160,251,1);
+    --select-input-icon-container-width: 56px;
+    --select-input-icon-color: rgba(15,15,15, 0.80);
     --select-input-max-width: 500px;
     --select-input-option-background-color: #f3f3f3;
     --select-input-option-background-color-hover: rgba(63,160,251,1);
@@ -17,6 +20,9 @@ export const createCSSTheme = (props?: any) => {
     --select-input-option-color: inherit;
     --select-input-option-color-hover: white;
     --select-input-chip-background-color: rgba(0,0,0, 0.10);
+    --select-input-chip-border-color: rgba(0,0,0, 0.07);
+    --select-input-chip-font-size: 0.9rem;
+    --select-input-chip-font-color: rgba(15,15,15, 0.80);
   `
 }
 
@@ -35,8 +41,10 @@ export const Styles = styled('div')`
   }
   .select-input-container {
     position: relative;
+    display: flex;
   }
   .select-input, .select-input--ghost {
+    flex: 1;
     background: transparent;
     border: 1px solid var(--select-input-border-color);
     border-radius: var(--select-input-border-radius);
@@ -45,10 +53,10 @@ export const Styles = styled('div')`
     padding-top: var(--select-input-padding);
     padding-bottom: var(--select-input-padding);
     padding-right: var(--select-input-padding);
-    padding-left: var(--select-input-icon-width);
+    padding-left: var(--select-input-icon-container-width);
     font-size: var(--select-input-font-size);
-    width: var(--select-input-max-width);
-    color: rgba(15,15,15, 0.80);
+    // width: var(--select-input-max-width);
+    color: var(--select-input-font-color);
   }
   .select-input.select-input--hide-placeholder::placeholder {
     color: transparent;
@@ -61,11 +69,11 @@ export const Styles = styled('div')`
   .select-input::placeholder {
     font-weight: 200;
     opacity: 0.5;
-    font-size: 18px;
+    font-size: var(--select-input-placeholder-font-size);
   }
   .select-input:focus {
-    border-color: var(--select-input-focus-color);
-    outline-color: var(--select-input-focus-color);
+    border-color: var(--select-input-focus-border-color);
+    outline-color: var(--select-input-focus-border-color);
     /*box-shadow: 0 0 3pt 2pt red;*/
     z-index: 1;
   }
@@ -88,7 +96,11 @@ export const Styles = styled('div')`
     display: flex;
     align-items: center;
     height: 100%;
-    width: var(--select-input-icon-width);
+    width: var(--select-input-icon-container-width);
+  }
+  .select-icon-container svg {
+    width: var(--select-input-icon-size);
+    height: var(--select-input-icon-size);
   }
   .select-icon {
     position: absolute;
@@ -99,12 +111,16 @@ export const Styles = styled('div')`
     transform: translateX(-50%);
   }
 
+  .select-icon svg {
+    fill: var(--select-input-icon-color);
+  }
+
 
   .select-input-chips {
     position: absolute;
     top: 0;
     bottom: 0;
-    left: calc(var(--select-input-icon-width) - 8px);
+    left: calc(var(--select-input-icon-container-width) - 8px);
     z-index: 3;
     padding: 
       calc(var(--select-input-padding)/2 + (var(--select-input-padding)/6))
@@ -209,24 +225,23 @@ export const Styles = styled('div')`
 
 
   .select-input-chip {
+    color: var(--select-input-chip-font-color);
     user-select: none;
     position: relative;
-    font-size: 0.90rem;
-    margin: 0.25rem;
+    font-size: var(--select-input-chip-font-size);
+    margin: 0 0.25rem;
     background-color: var(--select-input-chip-background-color);
-    border: 1px solid rgba(0,0,0,0.07);
+    border: 1px solid var(--select-input-chip-border-color);
     border-radius: 4px;
     display: flex;
     align-items: stretch;
   }
   .select-input-chip--rollup {
     cursor: pointer;
-    padding-left: 0.15rem;
-    padding-right: 0.15rem;
+    // padding-left: 0.15rem;
+    // padding-right: 0.15rem;
   }
   .select-input-chip--rollup:hover {
-    padding-left: 0.15rem;
-    padding-right: 0.15rem;
     background-color: rgba(0,0,0,0.15);
   }
   .select-input-chip > * {

@@ -1,10 +1,12 @@
-import 'react-app-polyfill/ie11';
+// import 'react-app-polyfill/ie11';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { Select,  createCSSTheme } from '../.';
+import Select, { IconLoading, IconSearch, createCSSTheme } from '../.';
 import { css } from 'emotion'
 
 import './index.css'
+
+
 
 const getCocktails = async (query: string) => {
   const url = `https://www.thecocktaildb.com/api/json/v1/1/search.php?s=${query}`
@@ -30,6 +32,7 @@ const getCocktails = async (query: string) => {
 
 const theme = createCSSTheme()
 
+
 const CustomOption = ({ item, className, style, onClick, ...props }: any) => {
   return <div className={'select-option'} onClick={onClick} >
     <div className="select-option__thumb-container">
@@ -53,6 +56,8 @@ const CustomOption = ({ item, className, style, onClick, ...props }: any) => {
 
 
 
+
+
 const App = () => {
   const [selected, setSelected] = React.useState<any>([])
   const selectRef = React.createRef<any>()
@@ -68,9 +73,35 @@ const App = () => {
     <div className="App">
       <div className={css`
         .CustomSelect {
+          width: 500px;
+          --select-input-max-width: 500px;
+          --select-input-padding: 0.60rem;
+          --select-input-icon-container-width: 40px;
+          --select-input-font-size: 0.90rem;
+          --select-input-font-color: rgba(15,15,15, 0.80);
+          // --select-input-font-color: rgb(106,106,106);
+          --select-input-border-color: rgba(152,152,152, 0.35);
+          
+          --select-input-icon-color: rgba(15,15,15, 0.80);
+          // --select-input-icon-color: rgb(106,106,106);
+
+          --select-input-placeholder-font-size: 0.90rem;
+          --select-input-focus-border-color: rgba(63,160,251,1);
           --select-input-option-background-color: #f3f3f3;
-          --select-input-option-background-color-hover: #ff0000;
-          --select-input-option-active-background-color-hover: #ffff00;
+          --select-input-option-background-color-hover: rgba(63,160,251,1);
+          --select-input-option-active-background-color-hover: rgba(63,160,251,0.50);
+          --select-input-option-color: inherit;
+          --select-input-option-color-hover: white;
+          --select-input-chip-font-size: 0.70rem;
+          --select-input-chip-font-color: rgba(106,106,106, 1.0);
+          --select-input-chip-background-color: rgba(239,239,239, 1.0);
+          --select-input-chip-border-color: transparent;
+        }
+        .CustomSelect .select-input-chip__remove {
+          border-left: none;
+          margin-left: 0;
+          background-color: inherit;
+          padding: 2px 4px;
         }
       `}>
         <Select
@@ -78,15 +109,18 @@ const App = () => {
           className={'CustomSelect'}
           placeholder={'Search cocktails'}
           selected={[]}
-          showSuggestion={true}
+          
           onSelectedChange={onSelectedChange}
           onInputChange={onInputChange}
           tabBehavior={'SELECT_HIGHLIGHTED_OPTION'}
+          showSuggestion={false}
           debounceTimeout={0}
           deleteBehavior={'REMOVE_LAST_SELECTED_ON_EMPTY'}
-          // components={{
-          //   Option: CustomOption
-          // }}
+          chipsOffset={4}
+          components={{
+            IconSearch: () => <IconSearch fill={'rgb(106,106,106)'} width={14} height={14} style={{ position: 'relative', top: 1 }}/>,
+            IconLoading: () => <IconLoading fill={'rgba(160,22,230,1)'} width={14} height={14} />
+          }}
         />
       </div>
     </div>
