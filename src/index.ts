@@ -1,6 +1,14 @@
 // import { ComponentType } from 'react'
-export { Select }  from './Select'
+// export { Select }  from './Select'
+import { Select } from './Select'
 export { createCSSTheme } from './Styles'
+
+export {
+  Select
+}
+
+export default Select
+
 
 
 // export interface OptionTypeBase {
