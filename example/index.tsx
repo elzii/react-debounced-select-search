@@ -101,7 +101,7 @@ const App = () => {
           border-left: none;
           margin-left: 0;
           background-color: inherit;
-          padding: 2px 4px;
+          padding: 0 4px;
         }
       `}>
         <Select
@@ -112,11 +112,12 @@ const App = () => {
           
           onSelectedChange={onSelectedChange}
           onInputChange={onInputChange}
-          tabBehavior={'SELECT_HIGHLIGHTED_OPTION'}
-          showSuggestion={false}
+          tabBehavior={'SELECT_SUGGESTED'}
+          showSuggestion={true}
           debounceTimeout={0}
           deleteBehavior={'REMOVE_LAST_SELECTED_ON_EMPTY'}
           chipsOffset={4}
+          hideOptionsAfterSelection={false}
           components={{
             IconSearch: () => <IconSearch fill={'rgb(106,106,106)'} width={14} height={14} style={{ position: 'relative', top: 1 }}/>,
             IconLoading: () => <IconLoading fill={'rgba(160,22,230,1)'} width={14} height={14} />

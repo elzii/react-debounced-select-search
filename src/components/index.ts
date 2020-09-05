@@ -1,4 +1,5 @@
 import { IconLoading, IconSearch, IconDelete } from '../icons'
+import { ClearSelection } from './ClearSelection'
 import { Options, Option } from './Options'
 import {
   InlineChipsWithRollup,
@@ -10,7 +11,8 @@ export const components = {
   IconLoading: IconLoading,
   IconSearch: IconSearch,
   IconDelete: IconDelete,
-  Chips: InlineChipsWithRollup
+  Chips: InlineChipsWithRollup,
+  ClearSelection: ClearSelection
 }
 
 export default components

@@ -77,6 +77,7 @@ export interface SelectProps {
   debugPortal?: boolean
   focusInputAfterRemovingSelectedItem?: boolean
   chipsOffset?: number
+  hideOptionsAfterSelection?: boolean
 }
 
 

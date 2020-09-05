@@ -2,6 +2,7 @@ import * as React from 'react'
 import cx from 'classnames'
 import computeScrollIntoView from 'compute-scroll-into-view'
 import { useDebounce } from './hooks/useDebounce'
+import { useOnClickOutside } from './hooks/useOnClickOutside'
 import update from 'immutability-helper'
 
 // import { useRect } from './hooks/useRect'
@@ -28,7 +29,7 @@ export const KEY_CODES = {
   LEFT: 37,
   RIGHT: 39,
   ENTER: 13,
-  ESCAPE: 91,
+  ESCAPE: 27,
   TAB: 9,
   BACKSPACE: 8,
   META: 91,
@@ -61,12 +62,18 @@ export const Select: React.FC<SelectProps> = (props) => {
   let inputRef = React.createRef<HTMLInputElement>()
   let optionsContainerRef = React.createRef<HTMLInputElement>()
 
+  useOnClickOutside(optionsContainerRef, () => setOptions([]))
+
   let chipsRef = React.createRef<HTMLDivElement>()
   const [chipsWidth, setChipsWidth] = React.useState<number>(0)
 
   // const selectedOptionNames = selected.map((s: any) => s.name.toLowerCase())
   const selectedOptionNames = React.useMemo(() => {
     return selected.map((s: any) => s.name.toLowerCase())
+  }, [selected])
+
+  const selectedOptionValues = React.useMemo(() => {
+    return selected.map((s: any) => s.value)
   }, [selected])
 
   React.useEffect(() => {
@@ -105,15 +112,6 @@ export const Select: React.FC<SelectProps> = (props) => {
   }, [selected])
 
 
-  const setFilteredOptions = React.useCallback((opts: any[]) => {
-    const filteredOptions = opts.filter(({ name }) => {
-      return !selectedOptionNames.includes(name.toLowerCase())
-    })
-    setOptions(filteredOptions)
-
-    return () => setOptions
-  },[selectedOptionNames])
-
   // Only used for dumping state
   // React.useEffect(() => {
   //   log('⚛️ EFFECT', 'effect')('selected', JSON.stringify(selected, null, 2))
@@ -128,6 +126,15 @@ export const Select: React.FC<SelectProps> = (props) => {
       )
     }
   }, [props.width])
+
+  const filterOptionsByUnselectedValues = React.useMemo(() => {
+    return options.filter(({ value }) => selectedOptionValues.indexOf(value) === -1)
+  }, [options, selectedOptionValues])
+
+  const filterOptionsByUnselectedNames = React.useMemo(() => {
+    return options.filter(({ name }) => !selectedOptionNames.includes(name.toLowerCase()))
+  }, [options, selectedOptionNames])
+
 
   React.useLayoutEffect(() => {
     const { current } = chipsRef
@@ -149,7 +156,7 @@ export const Select: React.FC<SelectProps> = (props) => {
     const selected_names = (selected as IOption[]).map(({ name }) =>
       name.toLowerCase()
     )
-    const opts = options
+    const opts = filterOptionsByUnselectedValues
       .map(({ name }) => name.toLowerCase())
       .filter((name) => selected_names.indexOf(name) !== 0)
 
@@ -166,7 +173,7 @@ export const Select: React.FC<SelectProps> = (props) => {
           matchIndex,
         ]
       : ['', null]
-  }, [options, selected, value])
+  }, [filterOptionsByUnselectedValues, selected, value])
 
   const scrollOptionIntoViewAsNeeded = React.useCallback(() => {
     if (optionsContainerRef.current) {
@@ -200,7 +207,7 @@ export const Select: React.FC<SelectProps> = (props) => {
   // Fetch our options on the debounced value
   React.useEffect(() => {
     // TODO: Do we need this?
-    setHighlighted(null)
+    // setHighlighted(null)
 
     if (debouncedValue) {
       
@@ -210,7 +217,7 @@ export const Select: React.FC<SelectProps> = (props) => {
         setStatus(STATUS_TYPES.LOADING)
         try {
           const opts = await props.getOptions(value)
-          setFilteredOptions(opts)
+          setOptions(opts)
           setStatus(STATUS_TYPES.IDLE)
         } catch (ex) {
           setStatus(STATUS_TYPES.ERROR)
@@ -225,7 +232,11 @@ export const Select: React.FC<SelectProps> = (props) => {
 
     } else {
       log('⚛️ EFFECT', 'effect')('No input value, clear options')
-      setOptions([])
+      if (props.hideOptionsAfterSelection) {
+        setOptions([])  
+      } else {
+        console.log('Keep the options open')
+      }
     }
   }, [debouncedValue])
 
@@ -238,6 +249,9 @@ export const Select: React.FC<SelectProps> = (props) => {
 
   React.useEffect(() => {
     log('⚛️ EFFECT', 'effect')('onSelectedChange', selected)
+    if ( selected.length === 0 ) {
+      setOptions([])
+    }
     onSelectedChange && onSelectedChange(selected)
   }, [selected, onSelectedChange])
 
@@ -265,6 +279,21 @@ export const Select: React.FC<SelectProps> = (props) => {
       setDisplayValue(value)
     },
     [onInputChange]
+  )
+  const handleFocus = React.useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      let value = event.target.value
+      
+      // TODO: Search options again here
+    },
+    []
+  )
+
+  const handleBlur = React.useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setOptions([])
+    },
+    []
   )
 
   const onRemoveSelectedOptionByIndex = (index: number) => {
@@ -307,12 +336,22 @@ export const Select: React.FC<SelectProps> = (props) => {
     setOptions((prev) => prev.filter(({ name }) => item.name !== name))
     setSelected((prev: any) => [...prev, options[index]])
   }
+  
+  const onClearSelection = () => {
+    setSelected([])
+    inputRef.current && inputRef.current.focus()
+  }
 
   const onKeyDown = React.useCallback(
     (event: React.KeyboardEvent) => {
       let value = (event.target as any).value
 
-      switch (event.which) {
+      switch (event.keyCode) {
+        case KEY_CODES.ESCAPE: {
+          setOptions([])
+          break;
+        }
+
         case KEY_CODES.UP: {
           event.preventDefault()
 
@@ -320,12 +359,12 @@ export const Select: React.FC<SelectProps> = (props) => {
             setHighlighted((prev) => {
               let nextIndex =
                 prev === 0
-                  ? options.length - 1
+                  ? filterOptionsByUnselectedValues.length - 1
                   : prev !== null
                   ? prev - 1
                   : prev
               
-              log('⬆ UP  ', 'key')('Prev:', prev, 'Next:', `${nextIndex}/${options.length - 1}`)
+              log('⬆ UP  ', 'key')('Prev:', prev, 'Next:', `${nextIndex}/${filterOptionsByUnselectedValues.length - 1}`)
 
               return nextIndex
             })
@@ -343,16 +382,16 @@ export const Select: React.FC<SelectProps> = (props) => {
           if (props.cycleOptions) {
             setHighlighted((prev) => {
               // let nextIndex = prev !== null
-              //   ? prev === options.length - 1 ? 0 : prev + 1
+              //   ? prev === filterOptionsByUnselectedValues.length - 1 ? 0 : prev + 1
               //   : 0
 
               let nextIndex
               if (prev === null) nextIndex = 0
               else if (prev === 0) nextIndex = 1
-              else if (prev === options.length - 1) nextIndex = 0
+              else if (prev === filterOptionsByUnselectedValues.length - 1) nextIndex = 0
               else nextIndex = prev + 1
 
-              log('⬇ DOWN', 'key')('Prev:', prev, 'Next:', `${nextIndex}/${options.length - 1}`)
+              log('⬇ DOWN', 'key')('Prev:', prev, 'Next:', `${nextIndex}/${filterOptionsByUnselectedValues.length - 1}`)
 
               return nextIndex
             })
@@ -360,7 +399,7 @@ export const Select: React.FC<SelectProps> = (props) => {
             // @TODO: Option to fill display value with highighted option
           } else {
             setHighlighted((prev) =>
-              prev === null ? 0 : prev < options.length - 1 ? prev + 1 : prev
+              prev === null ? 0 : prev < filterOptionsByUnselectedValues.length - 1 ? prev + 1 : prev
             )
           }
 
@@ -371,10 +410,13 @@ export const Select: React.FC<SelectProps> = (props) => {
 
           let index = highlighted as number
 
-          if (index !== null) {
-            setSelected((prev: any) => [...prev, options[index]])
+          if (index !== null && filterOptionsByUnselectedValues.length > 0) {
+            setSelected((prev: any) => [...prev, filterOptionsByUnselectedValues[index]])
             setValue('')
             setDisplayValue('')
+            if ( filterOptionsByUnselectedValues.length <= 2 ) {
+              setHighlighted(0)
+            }
           }
 
           break
@@ -382,7 +424,7 @@ export const Select: React.FC<SelectProps> = (props) => {
         case KEY_CODES.BACKSPACE: {
           // If we're on the input, and the value is empty, delete the previous chip
           if (props.deleteBehavior === 'REMOVE_LAST_SELECTED_ON_EMPTY') {
-            if (highlighted === null && value === '') {
+            if (value === '') {
               setSelected((prev: any) => prev.slice(0, prev.length - 1))
               log('⌫ DELETE', 'key')(`REMOVE_LAST_SELECTED_ON_EMPTY`)
             }
@@ -391,7 +433,6 @@ export const Select: React.FC<SelectProps> = (props) => {
           break
         }
         case KEY_CODES.TAB: {
-
 
           if (!!value) {
             if (highlighted === null) {
@@ -426,7 +467,7 @@ export const Select: React.FC<SelectProps> = (props) => {
 
                     setSelected((prev: any) => [
                       ...prev,
-                      options[suggestedIndex as number],
+                      filterOptionsByUnselectedValues[suggestedIndex as number],
                     ])
 
                     setValue('')
@@ -435,9 +476,9 @@ export const Select: React.FC<SelectProps> = (props) => {
 
                   if (props.tabBehavior === 'SELECT_FIRST_OPTION') {
 
-                    log('▷ TAB', 'key')('SELECT_FIRST_OPTION', options[0])
+                    log('▷ TAB', 'key')('SELECT_FIRST_OPTION', filterOptionsByUnselectedValues[0])
 
-                    setSelected((prev: any) => [...prev, options[0]])
+                    setSelected((prev: any) => [...prev, filterOptionsByUnselectedValues[0]])
 
                     setValue('')
                     setDisplayValue('')
@@ -445,13 +486,15 @@ export const Select: React.FC<SelectProps> = (props) => {
 
                   if (props.tabBehavior === 'SELECT_HIGHLIGHTED_OPTION') {
 
-                    log('▷ TAB', 'key')('SELECT_HIGHLIGHTED_OPTION', highlighted, options[highlighted])
+                    log('▷ TAB', 'key')('SELECT_HIGHLIGHTED_OPTION', highlighted, filterOptionsByUnselectedValues[highlighted])
 
-                    setSelected((prev: any) => [...prev, options[highlighted]])
+                    setSelected((prev: any) => [...prev, filterOptionsByUnselectedValues[highlighted]])
 
                     setValue('')
                     setDisplayValue('')
                   }
+
+                  
                 }
               }
             }
@@ -470,14 +513,15 @@ export const Select: React.FC<SelectProps> = (props) => {
         case KEY_CODES.RIGHT: {
           break;
         }
+        
 
         default: {
           // console.log(event.key, event.which)
-          break
+          return
         }
       }
     },
-    [options, highlighted, setSelected, value, ghostValue]
+    [highlighted, setSelected, value, ghostValue, filterOptionsByUnselectedValues]
   )
 
 
@@ -492,7 +536,14 @@ export const Select: React.FC<SelectProps> = (props) => {
   return (
     <Styled>
     <div className={cx('select', props.className)} style={{ ...props.style }}>
+
+
       <div className="select-input-container">
+        <Components.ClearSelection 
+          onClick={onClearSelection} 
+          style={{ opacity: selected.length ? 1 : 0}}
+        />
+
         <div ref={chipsRef} className="select-input-chips">
           {
             // <InlineChips chips={selected} onRemove={onRemoveSelectedOptionByIndex} />
@@ -543,6 +594,8 @@ export const Select: React.FC<SelectProps> = (props) => {
           type="text"
           placeholder={props.placeholder}
           onChange={handleChange}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           onKeyDown={onKeyDown}
           autoFocus={props.autoFocus}
           value={displayValue}
@@ -557,27 +610,30 @@ export const Select: React.FC<SelectProps> = (props) => {
         ref={optionsContainerRef}
         style={{ opacity: options.length ? 1 : 0 }}
       >
-        {options.map((option: IOption, i) => {
-          const highlight = highlighted === i
-          const className = cx('select-option-container', {
-            'select-option-container--highlighted': highlight,
-          })
-          const props = {
-            item: option,
-            highlight,
-            index: i,
-            className,
+        {
+          filterOptionsByUnselectedValues
+            .map((option: IOption, i) => {
+              const highlight = highlighted === i
+              const className = cx('select-option-container', {
+                'select-option-container--highlighted': highlight,
+              })
+              const props = {
+                item: option,
+                highlight,
+                index: i,
+                className,
+              }
+              return (
+                <Components.Option
+                  key={`option-${i}`}
+                  onClick={() => {
+                    onClickOption(option, i)
+                  }}
+                  {...props}
+                />
+              )
           }
-          return (
-            <Components.Option
-              key={`option-${i}`}
-              onClick={() => {
-                onClickOption(option, i)
-              }}
-              {...props}
-            />
-          )
-        })}
+        )}
       </Components.Options>
     </div>
     </Styled>
@@ -596,6 +652,8 @@ Select.defaultProps = {
   width: 500,
   debugPortal: false,
   focusInputAfterRemovingSelectedItem: true,
+  hideOptionsAfterSelection: true,
   className: '',
-  chipsOffset: 8
+  chipsOffset: 8,
+
 }

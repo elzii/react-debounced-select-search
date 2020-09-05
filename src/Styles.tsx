@@ -40,6 +40,7 @@ export const Styles = styled('div')`
     max-width: var(--select-input-max-width);
   }
   .select-input-container {
+    z-index: 10;
     position: relative;
     display: flex;
   }
@@ -48,8 +49,9 @@ export const Styles = styled('div')`
     background: transparent;
     border: 1px solid var(--select-input-border-color);
     border-radius: var(--select-input-border-radius);
-    outline: 1px solid transparent;
-    outline-style: revert;
+    // outline: 1px solid transparent;
+    // outline-style: revert;
+    outline: none;
     padding-top: var(--select-input-padding);
     padding-bottom: var(--select-input-padding);
     padding-right: var(--select-input-padding);
@@ -73,7 +75,7 @@ export const Styles = styled('div')`
   }
   .select-input:focus {
     border-color: var(--select-input-focus-border-color);
-    outline-color: var(--select-input-focus-border-color);
+    // outline-color: var(--select-input-focus-border-color);
     /*box-shadow: 0 0 3pt 2pt red;*/
     z-index: 1;
   }
@@ -143,7 +145,7 @@ export const Styles = styled('div')`
   .select-options-container {
     position: absolute;
     width: 100%;
-    z-index: 100;
+    z-index: 5;
     margin-top: 4px;
     max-height: 400px;
     overflow-y: scroll;
@@ -338,6 +340,23 @@ export const Styles = styled('div')`
   }
   .popper-dropdown__list-item-action:hover {
     background-color: rgba(0,0,0,0.12);
+  }
+
+  .select-clear-selection {
+    z-index: 20;
+    width: var(--select-input-icon-container-width);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 0;
+    right: 0;
+    top: 50%;
+    transform: translate3d(0, -50%, 0);
+  }
+  .select-clear-selection button {
+    background-color: transparent;
+    border: none;
   }
 
   @keyframes placeholderShimmer {
