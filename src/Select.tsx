@@ -62,7 +62,9 @@ export const Select: React.FC<SelectProps> = (props) => {
   let inputRef = React.createRef<HTMLInputElement>()
   let optionsContainerRef = React.createRef<HTMLInputElement>()
 
-  useOnClickOutside(optionsContainerRef, () => setOptions([]))
+  useOnClickOutside(optionsContainerRef, () => {
+    setOptions([])
+  })
 
   let chipsRef = React.createRef<HTMLDivElement>()
   const [chipsWidth, setChipsWidth] = React.useState<number>(0)
@@ -265,7 +267,7 @@ export const Select: React.FC<SelectProps> = (props) => {
         setGhostValue(gv as string)
       }
     }
-  }, [value, options, getSuggestedValue, props.showSuggestion])
+  }, [value, filterOptionsByUnselectedValues, getSuggestedValue, props.showSuggestion])
 
   React.useEffect(() => {
     scrollOptionIntoViewAsNeeded()
@@ -335,6 +337,13 @@ export const Select: React.FC<SelectProps> = (props) => {
   const onClickOption = (item: any, index: number) => {
     setOptions((prev) => prev.filter(({ name }) => item.name !== name))
     setSelected((prev: any) => [...prev, options[index]])
+    
+    setTimeout(() => {
+      setDisplayValue('')
+      setGhostValue('')
+    }, 0)
+
+    inputRef.current && inputRef.current.focus()
   }
   
   const onClearSelection = () => {
@@ -595,7 +604,7 @@ export const Select: React.FC<SelectProps> = (props) => {
           placeholder={props.placeholder}
           onChange={handleChange}
           onFocus={handleFocus}
-          onBlur={handleBlur}
+          // onBlur={handleBlur}
           onKeyDown={onKeyDown}
           autoFocus={props.autoFocus}
           value={displayValue}

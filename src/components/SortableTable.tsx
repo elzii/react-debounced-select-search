@@ -1,5 +1,4 @@
 import React from 'react'
-// import styled from 'styled-components'
 import { useTable, useSortBy } from 'react-table'
 
 export function SortableTable({ columns, data }:{ columns: any, data: any }) {

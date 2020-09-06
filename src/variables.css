@@ -18,3 +18,11 @@
     --select-input-chip-font-size: 0.9rem;
     --select-input-chip-font-color: rgba(106,106,106, 1.0);
 }
+
+/*
+"husky": {
+  "hooks": {
+    "pre-commit": "tsdx lint"
+  }
+},
+*/

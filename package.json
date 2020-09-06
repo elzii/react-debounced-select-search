@@ -2,7 +2,7 @@
   "name": "@zizzo/react-debounced-select-search",
   "author": "Alexander Zizzo",
   "description": "Like react-select, but worse, yet easier to reason about.",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -33,14 +33,10 @@
   "engines": {
     "node": ">=10"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "tsdx lint"
-    }
-  },
+  
   "prettier": {
     "printWidth": 80,
-    "semi": true,
+    "semi": false,
     "singleQuote": true,
     "trailingComma": "es5"
   },
@@ -48,6 +44,8 @@
     "react": ">=16"
   },
   "dependencies": {
+    "@emotion/core": "^10.0.35",
+    "@emotion/styled": "^10.0.27",
     "@popperjs/core": "^2.4.4",
     "classnames": "^2.2.6",
     "compute-scroll-into-view": "^1.0.14",
@@ -55,8 +53,7 @@
     "react-dnd": "^11.1.3",
     "react-dnd-html5-backend": "^11.1.3",
     "react-popper": "^2.2.3",
-    "react-table": "^7.5.0",
-    "styled-components": "^5.1.1"
+    "react-table": "^7.5.0"
   },
   "devDependencies": {
     "@types/classnames": "^2.2.10",
