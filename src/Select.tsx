@@ -69,13 +69,8 @@ export const Select: React.FC<SelectProps> = (props) => {
   let chipsRef = React.createRef<HTMLDivElement>()
   const [chipsWidth, setChipsWidth] = React.useState<number>(0)
 
-  // const selectedOptionNames = selected.map((s: any) => s.name.toLowerCase())
-  const selectedOptionNames = React.useMemo(() => {
-    return selected.map((s: any) => s.name.toLowerCase())
-  }, [selected])
-
   const selectedOptionValues = React.useMemo(() => {
-    return selected.map((s: any) => s.value)
+    return selected.length > 0 ? selected.map((s: any) => s.value) : []
   }, [selected])
 
   React.useEffect(() => {
@@ -83,6 +78,9 @@ export const Select: React.FC<SelectProps> = (props) => {
   }, [])
 
   const chips = React.useMemo(() => {
+    if ( !props.isMulti ) {
+      return []
+    }
     // Rollup if more than 1
     if (selected.length > 1) {
       const others: IChip[] = selected.slice(0, selected.length - 1)
@@ -129,13 +127,13 @@ export const Select: React.FC<SelectProps> = (props) => {
     }
   }, [props.width])
 
-  const filterOptionsByUnselectedValues = React.useMemo(() => {
+  const filteredOptons = React.useMemo(() => {
     return options.filter(({ value }) => selectedOptionValues.indexOf(value) === -1)
   }, [options, selectedOptionValues])
 
-  const filterOptionsByUnselectedNames = React.useMemo(() => {
-    return options.filter(({ name }) => !selectedOptionNames.includes(name.toLowerCase()))
-  }, [options, selectedOptionNames])
+  // const filterOptionsByUnselectedNames = React.useMemo(() => {
+  //   return options.filter(({ name }) => !selectedOptionNames.includes(name.toLowerCase()))
+  // }, [options, selectedOptionNames])
 
 
   React.useLayoutEffect(() => {
@@ -158,7 +156,7 @@ export const Select: React.FC<SelectProps> = (props) => {
     const selected_names = (selected as IOption[]).map(({ name }) =>
       name.toLowerCase()
     )
-    const opts = filterOptionsByUnselectedValues
+    const opts = filteredOptons
       .map(({ name }) => name.toLowerCase())
       .filter((name) => selected_names.indexOf(name) !== 0)
 
@@ -175,7 +173,7 @@ export const Select: React.FC<SelectProps> = (props) => {
           matchIndex,
         ]
       : ['', null]
-  }, [filterOptionsByUnselectedValues, selected, value])
+  }, [filteredOptons, selected, value])
 
   const scrollOptionIntoViewAsNeeded = React.useCallback(() => {
     if (optionsContainerRef.current) {
@@ -267,7 +265,7 @@ export const Select: React.FC<SelectProps> = (props) => {
         setGhostValue(gv as string)
       }
     }
-  }, [value, filterOptionsByUnselectedValues, getSuggestedValue, props.showSuggestion])
+  }, [value, filteredOptons, getSuggestedValue, props.showSuggestion])
 
   React.useEffect(() => {
     scrollOptionIntoViewAsNeeded()
@@ -368,12 +366,12 @@ export const Select: React.FC<SelectProps> = (props) => {
             setHighlighted((prev) => {
               let nextIndex =
                 prev === 0
-                  ? filterOptionsByUnselectedValues.length - 1
+                  ? filteredOptons.length - 1
                   : prev !== null
                   ? prev - 1
                   : prev
               
-              log('⬆ UP  ', 'key')('Prev:', prev, 'Next:', `${nextIndex}/${filterOptionsByUnselectedValues.length - 1}`)
+              log('⬆ UP  ', 'key')('Prev:', prev, 'Next:', `${nextIndex}/${filteredOptons.length - 1}`)
 
               return nextIndex
             })
@@ -391,16 +389,16 @@ export const Select: React.FC<SelectProps> = (props) => {
           if (props.cycleOptions) {
             setHighlighted((prev) => {
               // let nextIndex = prev !== null
-              //   ? prev === filterOptionsByUnselectedValues.length - 1 ? 0 : prev + 1
+              //   ? prev === filteredOptons.length - 1 ? 0 : prev + 1
               //   : 0
 
               let nextIndex
               if (prev === null) nextIndex = 0
               else if (prev === 0) nextIndex = 1
-              else if (prev === filterOptionsByUnselectedValues.length - 1) nextIndex = 0
+              else if (prev === filteredOptons.length - 1) nextIndex = 0
               else nextIndex = prev + 1
 
-              log('⬇ DOWN', 'key')('Prev:', prev, 'Next:', `${nextIndex}/${filterOptionsByUnselectedValues.length - 1}`)
+              log('⬇ DOWN', 'key')('Prev:', prev, 'Next:', `${nextIndex}/${filteredOptons.length - 1}`)
 
               return nextIndex
             })
@@ -408,7 +406,7 @@ export const Select: React.FC<SelectProps> = (props) => {
             // @TODO: Option to fill display value with highighted option
           } else {
             setHighlighted((prev) =>
-              prev === null ? 0 : prev < filterOptionsByUnselectedValues.length - 1 ? prev + 1 : prev
+              prev === null ? 0 : prev < filteredOptons.length - 1 ? prev + 1 : prev
             )
           }
 
@@ -419,19 +417,33 @@ export const Select: React.FC<SelectProps> = (props) => {
 
           let index = highlighted as number
 
-          if (index !== null && filterOptionsByUnselectedValues.length > 0) {
-            setSelected((prev: any) => [...prev, filterOptionsByUnselectedValues[index]])
-            setValue('')
-            setDisplayValue('')
-            if ( filterOptionsByUnselectedValues.length <= 2 ) {
-              setHighlighted(0)
+          if (index !== null && filteredOptons.length > 0) {
+
+            if ( !props.isMulti ) {
+              const selectedOption = filteredOptons[index]
+
+              // setValue(selectedOption.name)
+              setDisplayValue(selectedOption.name)
+              setSelected([selectedOption])
+              setOptions([])
+            } else {
+              setSelected((prev: any) => [...prev, filteredOptons[index]])
+              setValue('')
+              setDisplayValue('')
+              if ( filteredOptons.length <= 2 ) {
+                setHighlighted(0)
+              }
             }
+
           }
 
           break
         }
         case KEY_CODES.BACKSPACE: {
           // If we're on the input, and the value is empty, delete the previous chip
+          if ( !props.isMulti ) {
+            setSelected([])
+          }
           if (props.deleteBehavior === 'REMOVE_LAST_SELECTED_ON_EMPTY') {
             if (value === '') {
               setSelected((prev: any) => prev.slice(0, prev.length - 1))
@@ -476,7 +488,7 @@ export const Select: React.FC<SelectProps> = (props) => {
 
                     setSelected((prev: any) => [
                       ...prev,
-                      filterOptionsByUnselectedValues[suggestedIndex as number],
+                      filteredOptons[suggestedIndex as number],
                     ])
 
                     setValue('')
@@ -485,9 +497,9 @@ export const Select: React.FC<SelectProps> = (props) => {
 
                   if (props.tabBehavior === 'SELECT_FIRST_OPTION') {
 
-                    log('▷ TAB', 'key')('SELECT_FIRST_OPTION', filterOptionsByUnselectedValues[0])
+                    log('▷ TAB', 'key')('SELECT_FIRST_OPTION', filteredOptons[0])
 
-                    setSelected((prev: any) => [...prev, filterOptionsByUnselectedValues[0]])
+                    setSelected((prev: any) => [...prev, filteredOptons[0]])
 
                     setValue('')
                     setDisplayValue('')
@@ -495,9 +507,9 @@ export const Select: React.FC<SelectProps> = (props) => {
 
                   if (props.tabBehavior === 'SELECT_HIGHLIGHTED_OPTION') {
 
-                    log('▷ TAB', 'key')('SELECT_HIGHLIGHTED_OPTION', highlighted, filterOptionsByUnselectedValues[highlighted])
+                    log('▷ TAB', 'key')('SELECT_HIGHLIGHTED_OPTION', highlighted, filteredOptons[highlighted])
 
-                    setSelected((prev: any) => [...prev, filterOptionsByUnselectedValues[highlighted]])
+                    setSelected((prev: any) => [...prev, filteredOptons[highlighted]])
 
                     setValue('')
                     setDisplayValue('')
@@ -530,7 +542,7 @@ export const Select: React.FC<SelectProps> = (props) => {
         }
       }
     },
-    [highlighted, setSelected, value, ghostValue, filterOptionsByUnselectedValues]
+    [highlighted, setSelected, value, ghostValue, filteredOptons]
   )
 
 
@@ -579,7 +591,7 @@ export const Select: React.FC<SelectProps> = (props) => {
             className="select-icon"
             style={{ opacity: status === 'LOADING' ? 0 : 1 }}
           >
-            <Components.IconSearch />
+            <Components.IconSearch selected={selected} />
           </div>
         </div>
         <input
@@ -589,7 +601,9 @@ export const Select: React.FC<SelectProps> = (props) => {
           tabIndex={-1}
           value={ghostValue}
           onChange={() => null}
-          autoComplete="off"
+          // autoComplete="off"
+          // @ts-ignore
+          autoComplete="disabled" // Chrome ignores "off" and false
           spellCheck={false}
           style={{
             paddingLeft: chipsWidth,
@@ -608,7 +622,9 @@ export const Select: React.FC<SelectProps> = (props) => {
           onKeyDown={onKeyDown}
           autoFocus={props.autoFocus}
           value={displayValue}
-          autoComplete="off"
+          // autoComplete="off"
+          // @ts-ignore
+          autoComplete="disabled" // Chrome ignores "off" and false
           spellCheck={false}
           style={{
             paddingLeft: chipsWidth,
@@ -620,7 +636,7 @@ export const Select: React.FC<SelectProps> = (props) => {
         style={{ opacity: options.length ? 1 : 0 }}
       >
         {
-          filterOptionsByUnselectedValues
+          filteredOptons
             .map((option: IOption, i) => {
               const highlight = highlighted === i
               const className = cx('select-option-container', {
@@ -664,5 +680,5 @@ Select.defaultProps = {
   hideOptionsAfterSelection: true,
   className: '',
   chipsOffset: 8,
-
+  isMulti: true
 }

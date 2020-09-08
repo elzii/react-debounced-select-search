@@ -4,12 +4,14 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "start": "parcel index.html",
+    "start": "NODE_ENV=development parcel index.html",
     "build": "parcel build index.html"
   },
   "dependencies": {
     "classnames": "^2.2.6",
     "emotion": "^10.0.27",
+    "fuse.js": "^6.4.1",
+    "query-string": "^6.13.1",
     "react-app-polyfill": "^1.0.0"
   },
   "alias": {

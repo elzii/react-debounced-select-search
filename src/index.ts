@@ -78,6 +78,7 @@ export interface SelectProps {
   focusInputAfterRemovingSelectedItem?: boolean
   chipsOffset?: number
   hideOptionsAfterSelection?: boolean
+  isMulti?: boolean
 }
 
 

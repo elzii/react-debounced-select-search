@@ -10,7 +10,26 @@ body {
   margin-top: 5rem;
 }
 
-.App .select { margin-bottom: 4rem; }
+
+
+p {
+  font-size: 12px;
+  margin-bottom: 6px;
+  color: #666;
+}
+
+code {
+  font-weight: 500;
+  padding: 1px 4px;
+
+  /* font-size: 110%; */
+  /* background-color: #f7f7f7;
+  border-radius: 4px;
+  color: palevioletred;
+  border: 1px solid rgb(248, 215, 225);
+  font-family: inherit; */
+}
+
 
 @font-face {
   font-family: 'Netflix Sans';

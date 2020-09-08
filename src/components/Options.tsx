@@ -10,7 +10,7 @@ export interface OptionProps {
 }
 
 
-export const Option: React.SFC<OptionProps> = ({ item, className, style, onClick,...props }: OptionProps) => {
+export const Option: React.FC<OptionProps> = ({ item, className, style, onClick,...props }: OptionProps) => {
     const classNames = cx('select-option', className)
     return <div className={classNames} onClick={onClick}>
       <div className="select-option__thumb-container">
