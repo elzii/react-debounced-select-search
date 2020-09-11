@@ -35,12 +35,12 @@ module.exports = {
                 { src: 'assets/svg/**/*', dest: 'dist/svg' }
               ]
             }),
-            visualizer({
-              filename: 'stats.html',
-              open: true,
-              template: 'treemap', // treemap, sunburst, network
-              gzipSize: true
-            })
+            // visualizer({
+            //   filename: 'stats.html',
+            //   open: true,
+            //   template: 'treemap', // treemap, sunburst, network
+            //   gzipSize: true
+            // })
             // analyze()
         );
         return config;

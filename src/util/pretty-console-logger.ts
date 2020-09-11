@@ -1,8 +1,8 @@
 const log = (label: string = '', styles: string | string[] = ['default']) => (...args: any) => {
 
-  if ( __DEV__ ) {
-    return () => null;
-  }
+  // if ( __DEV__ ) {
+  //   return () => null;
+  // }
 
   const getStyleString = (s: string) => {
     switch(s) {

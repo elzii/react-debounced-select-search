@@ -179,6 +179,16 @@ const CountrySelect = () => {
     }
   ])
 
+  const sel = React.useMemo(() => {
+    return [{
+      id: 'US',
+      value: "US",
+      thumb: `https://svg-country-flags.s3.amazonaws.com/${"US"}.svg`,
+      name: "United States",
+      ...selected
+    }]
+  }, [selected])
+
   const onSelectedChange = (s) => {
     console.log('onSelectedChange', s)
     setSelected(s)
@@ -195,7 +205,7 @@ const CountrySelect = () => {
         className={"CustomSelect CustomSelectCountry"}
         style={{ marginBottom: "2rem" }}
         getOptions={getCountries}
-        selected={selected}
+        selected={sel}
         placeholder={"Search countries"}
         onSelectedChange={onSelectedChange}
         initialValue={initialValue}
@@ -203,7 +213,8 @@ const CountrySelect = () => {
         tabBehavior={"SELECT_HIGHLIGHTED_OPTION"}
         debounceTimeout={200}
         isMulti={false}
-        autoFocus={true}
+        autoFocus={false}
+        hideOptionsAfterSelection={true}
         components={{
           IconSearch: ({ selected }) => {
             if ( selected.length ) {
@@ -256,7 +267,7 @@ const LanguageSelect = () => {
         tabBehavior={"SELECT_HIGHLIGHTED_OPTION"}
         debounceTimeout={200}
         isMulti={false}
-        autoFocus={true}
+        autoFocus={false}
         components={{
           IconSearch: ({ selected }) => {
 
@@ -415,6 +426,7 @@ const App = () => {
             components={{
               IconSearch: CustomIconSearch
             }}
+            hideOptionsAfterSelection={false}
             autoFocus={false}
           />
         </div>

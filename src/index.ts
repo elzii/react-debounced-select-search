@@ -63,6 +63,8 @@ export interface SelectProps {
   onInputChange?: (value: string) => void
   onSelectedChange?: (value: string) => void
   onSelect?: (item: any, selected: any[]) => void
+  onFocus?: (event: any) => void
+  onBlur?: (event: any) => void
   components?: IComponents
   autoFocus?: boolean
   debounce?: boolean
@@ -92,3 +94,5 @@ export type TabBehavior =
 export type DeleteBehavior =
   | 'REMOVE_LAST_SELECTED_ON_EMPTY'
   | null
+
+export type NavigationDirection = 'down' | 'up' | 'left' | 'right'

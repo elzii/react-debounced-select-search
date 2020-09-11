@@ -15,7 +15,7 @@ import {
 } from './components/Chips'
 
 import { components } from './components'
-import { IOption, StatusIdle, StatusLoading, StatusError, SelectProps } from './index'
+import { IOption, StatusIdle, StatusLoading, StatusError, SelectProps, NavigationDirection } from './index'
 
 import log from './util/pretty-console-logger'
 import { escapeRegExp } from './util/misc'
@@ -47,47 +47,65 @@ export const STATUS_TYPES = {
 
 export function Select({
   initialValue = '',
-  // selected: initialSelection,
+  autoFocus = false,
+  debounceTimeout = 200,
+  debounce = true,
+  onSelectedChange,
+  onInputChange,
+  onBlur,
+  onFocus,
+  
+  cycleOptions = true,
+  inlineChips = true,
+  tabBehavior = 'SELECT_SUGGESTED',
+  deleteBehavior = 'REMOVE_LAST_SELECTED_ON_EMPTY',
+  showSuggestion = true,
+  width = 500,
+  debugPortal = false,
+  focusInputAfterRemovingSelectedItem = true,
+  hideOptionsAfterSelection = false,
+  className = '',
+  chipsOffset = 8,
+  isMulti = true,
+  placeholder = '',
+  selected = [],
+
   ...props
 }: SelectProps) {
 
-  const { onInputChange, onSelectedChange } = props
-
   const [value, setValue] = React.useState<string>(initialValue)
   const [displayValue, setDisplayValue] = React.useState<string>(initialValue)
-  const [ghostValue, setGhostValue] = React.useState<string>('')
+  const [suggestedValue, setSuggestedValue] = React.useState<string>('')
   const [options, setOptions] = React.useState<IOption[]>([])
-  const [selected, setSelected] = React.useState<any>(props.selected || [])
+  const [focused, setFocused] = React.useState<boolean>(autoFocus)
+  const [optionsVisible, setOptionsVisible] = React.useState<boolean>(false)
+  const [selectedOptions, setSelectedOptions] = React.useState<any>(selected)
   const [highlighted, setHighlighted] = React.useState<number | null>(0)
   const [status, setStatus] = React.useState<string>('IDLE')
 
-  const debouncedValue = useDebounce(value, props.debounceTimeout || 200)
+  const debouncedValue = useDebounce(value, debounceTimeout)
 
   let inputRef = React.createRef<HTMLInputElement>()
   let optionsContainerRef = React.createRef<HTMLInputElement>()
 
   useOnClickOutside(optionsContainerRef, () => {
-    setOptions([])
+    // setOptions([])
   })
 
   let chipsRef = React.createRef<HTMLDivElement>()
   const [chipsWidth, setChipsWidth] = React.useState<number>(0)
 
-  const selectedOptionValues = React.useMemo(() => {
-    return selected.length > 0 ? selected.map((s: any) => s.value) : []
-  }, [selected])
+  
 
   React.useEffect(() => {
     log('⚛️ EFFECT', 'effect')('Mounted', props)
   }, [])
 
   const chips = React.useMemo(() => {
-    if ( !props.isMulti ) {
-      return []
-    }
+    
     // Rollup if more than 1
-    if (selected.length > 1) {
-      const others: IChip[] = selected.slice(0, selected.length - 1)
+    if (selectedOptions.length > 1) {
+      const others: IChip[] = selectedOptions.slice(0, selectedOptions.length - 1)
       const rollup: IChipRollup = {
         type: 'rollup',
         count: others.length,
@@ -95,7 +113,7 @@ export function Select({
       }
       const current: IChipCurrent = {
         type: 'current',
-        items: selected.slice(-1),
+        items: selectedOptions.slice(-1),
       }
 
       const summary: IChips = [rollup, current]
@@ -103,17 +121,17 @@ export function Select({
       return summary
     }
     // Show as normal inline if only one
-    if (selected.length === 1) {
+    if (selectedOptions.length === 1) {
       const current: IChipCurrent = {
         type: 'current',
-        items: selected.slice(-1),
+        items: selectedOptions.slice(-1),
       }
       return [current]
     }
 
     // Return empty by default
     return [] as IChips
-  }, [selected])
+  }, [selectedOptions])
 
 
   // Only used for dumping state
@@ -122,23 +140,31 @@ export function Select({
   // }, [selected])
 
   React.useEffect(() => {
-    if (props.width) {
+    if (width) {
       log('FIXME', 'warning')('Set CSS width from props')
       document.documentElement.style.setProperty(
         '--select-input-max-width',
-        `${props.width}px`
+        `${width}px`
       )
     }
-  }, [props.width])
+  }, [width])
 
-  const filteredOptons = React.useMemo(() => {
-    return options.filter(({ value }) => selectedOptionValues.indexOf(value) === -1)
+  const selectedOptionValues = React.useMemo(() => {
+    return selectedOptions.length > 0 ? selectedOptions.map((s: any) => s.value) : []
+  }, [selectedOptions])
+
+  const filteredOptions = React.useMemo(() => {
+    const filtered = options.filter(({ value }) => selectedOptionValues.indexOf(value) === -1)
+    return filtered
   }, [options, selectedOptionValues])
 
   // const filterOptionsByUnselectedNames = React.useMemo(() => {
   //   return options.filter(({ name }) => !selectedOptionNames.includes(name.toLowerCase()))
   // }, [options, selectedOptionNames])
 
+  // const filteredOptions = options.filter(({ value }) => {
+  //   return selectedOptions.map((s: any) => s.value).indexOf(value) === -1
+  // })
 
   React.useLayoutEffect(() => {
     const { current } = chipsRef
@@ -149,18 +175,17 @@ export function Select({
 
     let xOffset = rect.x - parentRect.x
 
-    // setChipsWidth(rect.width + (xOffset - 10))
-    setChipsWidth(rect.width + (xOffset - (props.chipsOffset ? props.chipsOffset : 0)))
-  }, [selected, chipsRef])
+    setChipsWidth(rect.width + (xOffset - (chipsOffset ? chipsOffset : 0)))
+  }, [chipsRef])
 
   const getSuggestedValue = React.useCallback(() => {
     // console.count('getSuggestedValue')
     
     let v = value.toLowerCase()
-    const selected_names = (selected as IOption[]).map(({ name }) =>
+    const selected_names = (selectedOptions as IOption[]).map(({ name }) =>
       name.toLowerCase()
     )
-    const opts = filteredOptons
+    const opts = filteredOptions
       .map(({ name }) => name.toLowerCase())
       .filter((name) => selected_names.indexOf(name) !== 0)
 
@@ -177,7 +202,7 @@ export function Select({
           matchIndex,
         ]
       : ['', null]
-  }, [filteredOptons, selected, value])
+  }, [filteredOptions, selectedOptions, value])
 
   const scrollOptionIntoViewAsNeeded = React.useCallback(() => {
     if (optionsContainerRef.current) {
@@ -208,109 +233,116 @@ export function Select({
     }
   }, [highlighted, optionsContainerRef])
 
+  React.useEffect(() => {
+    scrollOptionIntoViewAsNeeded()
+  }, [highlighted, scrollOptionIntoViewAsNeeded])
+
   // Fetch our options on the debounced value
   React.useEffect(() => {
     // TODO: Do we need this?
     // setHighlighted(null)
 
-    if (debouncedValue) {
-      
-      const setOpts = async (cb?: () => void) => {
-        log('🌐 REQUEST: getOptions', 'request')(`"${value}"`)
+    if (debouncedValue && focused) {
 
-        setStatus(STATUS_TYPES.LOADING)
-        try {
-          const opts = await props.getOptions(value)
-          setOptions(opts)
-          setStatus(STATUS_TYPES.IDLE)
-        } catch (ex) {
+      log('getOptions', 'request')(`Fetching, term is ${debouncedValue}`)
+
+      setStatus(STATUS_TYPES.LOADING)
+
+      props.getOptions(debouncedValue)
+        .then(res => setOptions(res))
+        .then(() => setOptionsVisible(true))
+        .then(() => setHighlighted(0))
+        .then(() => setStatus(STATUS_TYPES.IDLE))
+        .catch((ex) => {
           setStatus(STATUS_TYPES.ERROR)
           console.log('ex', ex)
-        }
-
-        cb && cb()
-      }
-      setOpts(() => {
-        setHighlighted(0)
-      })
+        })
 
     } else {
       log('⚛️ EFFECT', 'effect')('No input value, clear options')
-      if (props.hideOptionsAfterSelection) {
-        setOptions([])  
+      if (hideOptionsAfterSelection || !isMulti) {
+        setOptionsVisible(false)
       } else {
         console.log('Keep the options open')
       }
     }
-  }, [debouncedValue])
+  }, [debouncedValue, focused, props.getOptions])
+
+
 
   // React.useEffect(() => {
-  //   if ( (props.selected as any[]).length ) {
-  //     setSelected(props.selected)  
-  //     log('⚛️ EFFECT', 'effect')('Set selected from props', props.selected)
+  //   log('⚛️ EFFECT', 'effect')('Clear options as needed')
+  //   if ( displayValue === '' ) {
+  //     setOptionsVisible(false)
+  //     setOptions([])
+  //     if ( !isMulti ) {
+  //       setSelectedOptions([])
+  //     }
   //   }
-  // }, [props.selected])
+  // }, [displayValue, isMulti])
+
 
   React.useEffect(() => {
-    log('⚛️ EFFECT', 'effect')('onSelectedChange', selected)
-    if ( selected.length === 0 ) {
-      setOptions([])
-    }
-    onSelectedChange && onSelectedChange(selected)
-  }, [selected])
+    log('⚛️ EFFECT', 'effect')('onSelectedChange', selectedOptions)
+    onSelectedChange && onSelectedChange(selectedOptions)
+  }, [selectedOptionValues])
 
   // Generate our ghost suggestion value
   React.useEffect(() => {
-    if (props.showSuggestion) {
+    if (showSuggestion) {
       if (value === '') {
-        setGhostValue('')
+        setSuggestedValue('')
       } else {
         const [gv] = getSuggestedValue()
-        setGhostValue(gv as string)
+        setSuggestedValue(gv as string)
       }
     }
-  }, [value, filteredOptons, getSuggestedValue, props.showSuggestion])
+  }, [value, getSuggestedValue, showSuggestion])
 
-  React.useEffect(() => {
-    scrollOptionIntoViewAsNeeded()
-  }, [highlighted, scrollOptionIntoViewAsNeeded])
-
+  
   const handleChange = React.useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      let value = event.target.value
-      onInputChange && onInputChange(value)
-      setValue(value)
-      setDisplayValue(value)
+      let val = event.target.value
+      onInputChange && onInputChange(val)
+      
+      setDisplayValue(val)
+      setValue(val)
+      
+      if ( val === '' && !isMulti ) {
+        setOptionsVisible(false)
+        setOptions([])
+        setSelectedOptions([])
+      }
     },
-    [onInputChange]
+    [onInputChange, setValue, setDisplayValue, isMulti]
   )
   const handleFocus = React.useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      let value = event.target.value
-      
-      // TODO: Search options again here
+      setFocused(true)
+      onFocus && onFocus(event)
     },
     []
   )
 
   const handleBlur = React.useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      setOptions([])
+      setFocused(false)
+      onBlur && onBlur(event)
     },
     []
   )
 
-  const onRemoveSelectedOptionByIndex = (index: number) => {
-    // console.log('onRemoveSelectedOptionByIndex', index, selected)
-    setSelected((prev: any) => prev.filter((_: any, i: number) => i !== index))
-  }
+  // const onRemoveSelectedOptionByIndex = (index: number) => {
+  //   // console.log('onRemoveSelectedOptionByIndex', index, selected)
+  //   setSelected((prev: any) => prev.filter((_: any, i: number) => i !== index))
+  // }
 
   const onRemoveSelectedOptionByItemId = ({ id }:IOption) => {
     // console.log('onRemoveSelectedOptionByItemId', id, selected)
-    setSelected((prev: any) => prev.filter((item: any) => item.id !== id))
+    setSelectedOptions((prev: any) => prev.filter((item: any) => item.id !== id))
 
     // Focus after
-    if ( props.focusInputAfterRemovingSelectedItem ) {
+    if ( focusInputAfterRemovingSelectedItem ) {
       inputRef.current?.focus()
     }
   }
@@ -320,245 +352,294 @@ export function Select({
     // const dragIndex = prev
     // const hoverIndex = next
 
-    const dragIndex = (selected.length-1) - prev
-    const hoverIndex = (selected.length-1) - next
+    const dragIndex = (selectedOptions.length-1) - prev
+    const hoverIndex = (selectedOptions.length-1) - next
     
-    const dragCard = selected[dragIndex]
+    const dragCard = selectedOptions[dragIndex]
 
-    const nextSelected = update(selected, {
+    const nextSelected = update(selectedOptions, {
       $splice: [
         [dragIndex, 1],
         [hoverIndex, 0, dragCard],
       ],
     })
 
-    setSelected(nextSelected)
+    setSelectedOptions(nextSelected)
     
-  }, [selected])
+  }, [selectedOptions])
 
-  const onClickOption = (item: any, index: number) => {
-    const selectedOption = filteredOptons[index]
+  const onClickOption = React.useCallback((item: any, index: number) => {
+    const selectedOption = filteredOptions[index]
     // setOptions((prev) => prev.filter(({ name }) => item.name !== name))
-    
-      
-    if ( props.isMulti ) {
-      setSelected((prev: any) => [...prev, selectedOption])
-      setTimeout(() => {
-        setDisplayValue('')
-        setGhostValue('')
-      }, 0)
-    } else {
-      setSelected((prev: any) => [selectedOption])
-      setDisplayValue('')
-      setGhostValue('')
-      setDisplayValue(selectedOption.value)
-    }
-
-    inputRef.current && inputRef.current.focus()
-  }
   
-  const onClearSelection = () => {
-    setSelected([])
+    setSelectedOptions((prev: any) => [...prev, selectedOption])
+    setDisplayValue('')
+    setSuggestedValue('')
+      
+    inputRef.current && inputRef.current.focus()
+
+  }, [filteredOptions])
+  
+  
+  const onClearSelection = React.useCallback(() => {
+    setSelectedOptions([])
+    setOptions([])
     setValue('')
     setDisplayValue('')
+
     inputRef.current && inputRef.current.focus()
-  }
+  }, [])
 
-  const onKeyDown = React.useCallback(
-    (event: React.KeyboardEvent) => {
-      let value = (event.target as any).value
+  
 
-      switch (event.keyCode) {
-        case KEY_CODES.ESCAPE: {
-          setOptions([])
-          break;
+  const navigateOptionsList = React.useCallback((direction: NavigationDirection) => {
+    switch(direction) {
+      case 'up': {
+
+        if (cycleOptions) {
+          setHighlighted((prev) => {
+            let nextIndex =
+              prev === 0
+                ? filteredOptions.length - 1
+                : prev !== null
+                ? prev - 1
+                : prev
+            
+            log('⬆ UP  ', 'key')('Prev:', prev, 'Next:', `${nextIndex}/${filteredOptions.length - 1}`)
+
+            return nextIndex
+          })
+        } else {
+          setHighlighted((prev) =>
+            prev === 0 ? null : prev !== null ? prev - 1 : prev
+          )
         }
 
-        case KEY_CODES.UP: {
-          event.preventDefault()
-
-          if (props.cycleOptions) {
-            setHighlighted((prev) => {
-              let nextIndex =
-                prev === 0
-                  ? filteredOptons.length - 1
-                  : prev !== null
-                  ? prev - 1
-                  : prev
-              
-              log('⬆ UP  ', 'key')('Prev:', prev, 'Next:', `${nextIndex}/${filteredOptons.length - 1}`)
-
-              return nextIndex
-            })
-          } else {
-            setHighlighted((prev) =>
-              prev === 0 ? null : prev !== null ? prev - 1 : prev
-            )
-          }
-
-          break
-        }
-        case KEY_CODES.DOWN: {
-          event.preventDefault()
-
-          if (props.cycleOptions) {
-            setHighlighted((prev) => {
-              // let nextIndex = prev !== null
-              //   ? prev === filteredOptons.length - 1 ? 0 : prev + 1
-              //   : 0
-
-              let nextIndex
-              if (prev === null) nextIndex = 0
-              else if (prev === 0) nextIndex = 1
-              else if (prev === filteredOptons.length - 1) nextIndex = 0
-              else nextIndex = prev + 1
-
-              log('⬇ DOWN', 'key')('Prev:', prev, 'Next:', `${nextIndex}/${filteredOptons.length - 1}`)
-
-              return nextIndex
-            })
-
-            // @TODO: Option to fill display value with highighted option
-          } else {
-            setHighlighted((prev) =>
-              prev === null ? 0 : prev < filteredOptons.length - 1 ? prev + 1 : prev
-            )
-          }
-
-          break
-        }
-        case KEY_CODES.ENTER: {
-          event.preventDefault()
-
-          let index = highlighted as number
-
-          if (index !== null && filteredOptons.length > 0) {
-
-            if ( !props.isMulti ) {
-              const selectedOption = filteredOptons[index]
-
-              // setValue(selectedOption.name)
-              setDisplayValue(selectedOption.name)
-              setSelected([selectedOption])
-              setOptions([])
-            } else {
-              setSelected((prev: any) => [...prev, filteredOptons[index]])
-              setValue('')
-              setDisplayValue('')
-              if ( filteredOptons.length <= 2 ) {
-                setHighlighted(0)
-              }
-            }
-
-          }
-
-          break
-        }
-        case KEY_CODES.BACKSPACE: {
-          // If we're on the input, and the value is empty, delete the previous chip
-          if ( !props.isMulti ) {
-            setSelected([])
-          }
-          if (props.deleteBehavior === 'REMOVE_LAST_SELECTED_ON_EMPTY') {
-            if (value === '') {
-              setSelected((prev: any) => prev.slice(0, prev.length - 1))
-              log('⌫ DELETE', 'key')(`REMOVE_LAST_SELECTED_ON_EMPTY`)
-            }
-          }
-
-          break
-        }
-        case KEY_CODES.TAB: {
-
-          if (!!value) {
-            if (highlighted === null) {
-              console.log('TABBED IN THE INPUT, IGNORE')
-            } else {
-              // Only block event if we have results up
-              event.preventDefault()
-
-              const [suggestedValue, suggestedIndex] = getSuggestedValue()
-
-              if (suggestedIndex !== null) {
-                if (props.tabBehavior) {
-                  if (props.tabBehavior === 'SEARCH_SUGGESTED') {
-
-                    log('▷ TAB', 'key')('SEARCH_SUGGESTED', `Suggested Value:`, suggestedValue, `Suggested Index:`, suggestedIndex)
-
-                    if (!!suggestedValue) {
-                      setValue(suggestedValue as string)
-                      setDisplayValue(suggestedValue as string)
-                    }
-                  }
-
-                  if (
-                    props.tabBehavior === 'SELECT_SUGGESTED' &&
-                    props.showSuggestion
-                  ) {
-
-                    log('▷ TAB', 'key')('SELECT_SUGGESTED', 
-                      `Suggested Value:`, suggestedValue, 
-                      `Suggested Index:`, suggestedIndex
-                    )
-
-                    setSelected((prev: any) => [
-                      ...prev,
-                      filteredOptons[suggestedIndex as number],
-                    ])
-
-                    setValue('')
-                    setDisplayValue('')
-                  }
-
-                  if (props.tabBehavior === 'SELECT_FIRST_OPTION') {
-
-                    log('▷ TAB', 'key')('SELECT_FIRST_OPTION', filteredOptons[0])
-
-                    setSelected((prev: any) => [...prev, filteredOptons[0]])
-
-                    setValue('')
-                    setDisplayValue('')
-                  }
-
-                  if (props.tabBehavior === 'SELECT_HIGHLIGHTED_OPTION') {
-
-                    log('▷ TAB', 'key')('SELECT_HIGHLIGHTED_OPTION', highlighted, filteredOptons[highlighted])
-
-                    setSelected((prev: any) => [...prev, filteredOptons[highlighted]])
-
-                    setValue('')
-                    setDisplayValue('')
-                  }
-
-                  
-                }
-              }
-            }
-
-            // Double tap TAB completes like ENTER
-            if (value === ghostValue) {
-              console.log('DOUBLE TAP!')
-            }
-          }
-          break
-        }
-
-        case KEY_CODES.LEFT: {
-          break;
-        }
-        case KEY_CODES.RIGHT: {
-          break;
-        }
-        
-
-        default: {
-          // console.log(event.key, event.which)
-          return
-        }
+        break
       }
-    },
-    [highlighted, setSelected, value, ghostValue, filteredOptons]
-  )
+      case 'down': {
+        if (cycleOptions) {
+          setHighlighted((prev) => {
+            // let nextIndex = prev !== null
+            //   ? prev === filteredOptions.length - 1 ? 0 : prev + 1
+            //   : 0
+
+            let nextIndex
+            if (prev === null) nextIndex = 0
+            else if (prev === 0) nextIndex = 1
+            else if (prev === filteredOptions.length - 1) nextIndex = 0
+            else nextIndex = prev + 1
+
+            log('⬇ DOWN', 'key')('Prev:', prev, 'Next:', `${nextIndex}/${filteredOptions.length - 1}`)
+
+            return nextIndex
+          })
+
+          // @TODO: Option to fill display value with highighted option
+        } else {
+          setHighlighted((prev) =>
+            prev === null ? 0 : prev < filteredOptions.length - 1 ? prev + 1 : prev
+          )
+        }
+        break
+      }
+      default: {
+        break
+      }
+    }
+  }, [highlighted, filteredOptions])
+
+  const onKeyDownSingle = React.useCallback((event: React.KeyboardEvent) => {
+    let val = (event.target as any).value
+
+    switch (event.keyCode) {
+      case KEY_CODES.ESCAPE: {
+        break;
+      }
+      case KEY_CODES.UP: {
+        event.preventDefault()
+        navigateOptionsList('up')
+        break
+      }
+      case KEY_CODES.DOWN: {
+        event.preventDefault()
+        navigateOptionsList('down')
+        break
+      }
+      case KEY_CODES.ENTER: {
+        event.preventDefault()
+
+        let index = highlighted as number
+
+        log('ENTER', 'key')(index, filteredOptions)
+
+        if (index !== null && filteredOptions.length > 0) {
+          setSelectedOptions((prev: any) => [...prev, filteredOptions[index]])
+          setValue('')
+          setDisplayValue(filteredOptions[index].name)
+
+          if ( filteredOptions.length <= 2 ) {
+            setHighlighted(0)
+          }
+
+        }
+
+        break
+      }
+      case KEY_CODES.BACKSPACE: {
+        log('⌫ DELETE', 'key')
+        break
+      }
+      case KEY_CODES.TAB: {
+        // event.preventDefault()
+
+        if ( highlighted === null ) {
+          log('▷ TAB', 'key')('Normal tab behavior')
+        }
+        break;
+      }
+      default: {
+        log('KEY', 'key')(event.keyCode, event.key)
+        return
+      }
+    }
+
+  }, [highlighted, setSelectedOptions, suggestedValue, filteredOptions])
+
+  const onKeyDownMulti = React.useCallback((event: React.KeyboardEvent) => {
+    let val = (event.target as any).value
+
+    switch (event.keyCode) {
+      case KEY_CODES.ESCAPE: {
+        setOptionsVisible(false)
+        break;
+      }
+
+      case KEY_CODES.UP: {
+        event.preventDefault()
+        navigateOptionsList('up')
+        break
+      }
+      case KEY_CODES.DOWN: {
+        event.preventDefault()
+        navigateOptionsList('down')
+        break
+      }
+      case KEY_CODES.ENTER: {
+        event.preventDefault()
+
+        let index = highlighted as number
+
+        if (index !== null && filteredOptions.length > 0) {
+          setSelectedOptions((prev: any) => [...prev, filteredOptions[index]])
+          setValue('')
+          setDisplayValue('')
+          if ( filteredOptions.length <= 2 ) {
+            setHighlighted(0)
+          }
+        }
+
+        break
+      }
+      case KEY_CODES.BACKSPACE: {
+        // If we're on the input, and the value is empty, delete the previous chip
+        
+        if (deleteBehavior === 'REMOVE_LAST_SELECTED_ON_EMPTY') {
+          if (val === '') {
+            setSelectedOptions((prev: any) => prev.slice(0, prev.length - 1))
+            log('⌫ DELETE', 'key')(`REMOVE_LAST_SELECTED_ON_EMPTY`)
+          }
+        }
+
+        break
+      }
+      case KEY_CODES.TAB: {
+
+        if (!!val) {
+          if (highlighted === null) {
+            console.log('TABBED IN THE INPUT, IGNORE')
+          } else {
+            // Only block event if we have results up
+            event.preventDefault()
+
+            const [suggestedValue, suggestedIndex] = getSuggestedValue()
+
+            if (suggestedIndex !== null) {
+              if (tabBehavior) {
+                if (tabBehavior === 'SEARCH_SUGGESTED') {
+
+                  log('▷ TAB', 'key')('SEARCH_SUGGESTED', `Suggested Value:`, suggestedValue, `Suggested Index:`, suggestedIndex)
+
+                  if (!!suggestedValue) {
+                    setValue(suggestedValue as string)
+                    setDisplayValue(suggestedValue as string)
+                  }
+                }
+
+                if (
+                  tabBehavior === 'SELECT_SUGGESTED' &&
+                  showSuggestion
+                ) {
+
+                  log('▷ TAB', 'key')('SELECT_SUGGESTED', 
+                    `Suggested Value:`, suggestedValue, 
+                    `Suggested Index:`, suggestedIndex
+                  )
+
+                  setSelectedOptions((prev: any) => [
+                    ...prev,
+                    filteredOptions[suggestedIndex as number],
+                  ])
+
+                  setValue('')
+                  setDisplayValue('')
+                }
+
+                if (tabBehavior === 'SELECT_FIRST_OPTION') {
+
+                  log('▷ TAB', 'key')('SELECT_FIRST_OPTION', filteredOptions[0])
+
+                  setSelectedOptions((prev: any) => [...prev, filteredOptions[0]])
+
+                  setValue('')
+                  setDisplayValue('')
+                }
+
+                if (tabBehavior === 'SELECT_HIGHLIGHTED_OPTION') {
+
+                  log('▷ TAB', 'key')('SELECT_HIGHLIGHTED_OPTION', highlighted, filteredOptions[highlighted])
+
+                  setSelectedOptions((prev: any) => [...prev, filteredOptions[highlighted]])
+
+                  setValue('')
+                  setDisplayValue('')
+                }
+
+                
+              }
+            }
+          }
+
+          // Double tap TAB completes like ENTER
+          if (val === suggestedValue) {
+            console.log('DOUBLE TAP!')
+          }
+        }
+        break
+      }
+
+      case KEY_CODES.LEFT: {
+        break;
+      }
+      case KEY_CODES.RIGHT: {
+        break;
+      }
+      
+      default: {
+        return
+      }
+    }
+  }, [highlighted, setSelectedOptions, suggestedValue, filteredOptions])
 
 
   const Components = React.useMemo(() => ({
@@ -571,13 +652,15 @@ export function Select({
   // RENDER
   return (
     <Styled>
-    <div className={cx('select', props.className)} style={{ ...props.style }}>
+    <div className={cx('select', className)} style={{ ...props.style }}>
 
 
       <div className="select-input-container">
         <Components.ClearSelection 
           onClick={onClearSelection} 
-          style={{ opacity: selected.length ? 1 : 0}}
+          style={{ 
+            opacity: selectedOptions.length ? 1 : 0
+          }}
         />
 
         <div ref={chipsRef} className="select-input-chips">
@@ -585,13 +668,15 @@ export function Select({
             // <InlineChips chips={selected} onRemove={onRemoveSelectedOptionByIndex} />
           }
           {
-            <Components.Chips
-              chips={chips}
-              // onRemove={onRemoveSelectedOptionByIndex}
-              onRemove={onRemoveSelectedOptionByItemId}
-              onReorder={onReorderSelected}
-              selected={selected}
-            />
+            isMulti && <>
+              <Components.Chips
+                chips={chips}
+                // onRemove={onRemoveSelectedOptionByIndex}
+                onRemove={onRemoveSelectedOptionByItemId}
+                onReorder={onReorderSelected}
+                selected={selectedOptions}
+              />
+            </>
           }
         </div>
 
@@ -606,7 +691,7 @@ export function Select({
             className="select-icon"
             style={{ opacity: status === 'LOADING' ? 0 : 1 }}
           >
-            <Components.IconSearch selected={selected} />
+            <Components.IconSearch selected={selectedOptions} />
           </div>
         </div>
         <input
@@ -614,7 +699,7 @@ export function Select({
           type="text"
           disabled={true}
           tabIndex={-1}
-          value={ghostValue}
+          value={suggestedValue}
           onChange={() => null}
           // autoComplete="off"
           // @ts-ignore
@@ -627,15 +712,15 @@ export function Select({
         <input
           ref={inputRef}
           className={cx('select-input', {
-            'select-input--hide-placeholder': selected.length >= 1,
+            'select-input--hide-placeholder': selectedOptions.length >= 1,
           })}
           type="text"
-          placeholder={props.placeholder}
+          placeholder={placeholder}
           onChange={handleChange}
           onFocus={handleFocus}
           // onBlur={handleBlur}
-          onKeyDown={onKeyDown}
-          autoFocus={props.autoFocus}
+          onKeyDown={isMulti ? onKeyDownMulti : onKeyDownSingle}
+          autoFocus={autoFocus}
           value={displayValue}
           // autoComplete="off"
           // @ts-ignore
@@ -648,10 +733,13 @@ export function Select({
       </div>
       <Components.Options
         ref={optionsContainerRef}
-        style={{ opacity: options.length ? 1 : 0 }}
+        style={{ 
+          display: optionsVisible ? 'block' : 'none',
+          opacity: optionsVisible ? 1 : 0
+        }}
       >
         {
-          filteredOptons
+          filteredOptions
             .map((option: IOption, i) => {
               const highlight = highlighted === i
               const className = cx('select-option-container', {
@@ -680,20 +768,3 @@ export function Select({
   )
 }
 
-Select.defaultProps = {
-  autoFocus: true,
-  debounce: true,
-  debounceTimeout: 200,
-  cycleOptions: true,
-  inlineChips: true,
-  tabBehavior: 'SELECT_SUGGESTED',
-  deleteBehavior: 'REMOVE_LAST_SELECTED_ON_EMPTY',
-  showSuggestion: true,
-  width: 500,
-  debugPortal: false,
-  focusInputAfterRemovingSelectedItem: true,
-  hideOptionsAfterSelection: true,
-  className: '',
-  chipsOffset: 8,
-  isMulti: true,
-}

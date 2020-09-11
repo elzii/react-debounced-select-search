@@ -344,7 +344,7 @@ export const Styles = styled('div')`
   }
 
   .select-clear-selection {
-    z-index: 20;
+    z-index: 4;
     width: var(--select-input-icon-container-width);
     display: flex;
     align-items: center;
