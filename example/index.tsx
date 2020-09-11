@@ -184,6 +184,8 @@ const CountrySelect = () => {
     setSelected(s)
   }
 
+  const initialValue = selected[0] ? selected[0].name : ''
+
   return (
     <div>
       <p>
@@ -196,7 +198,7 @@ const CountrySelect = () => {
         selected={selected}
         placeholder={"Search countries"}
         onSelectedChange={onSelectedChange}
-        displayValue={'United States'}
+        initialValue={initialValue}
         showSuggestion={false}
         tabBehavior={"SELECT_HIGHLIGHTED_OPTION"}
         debounceTimeout={200}

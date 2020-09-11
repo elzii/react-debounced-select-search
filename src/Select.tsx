@@ -45,12 +45,16 @@ export const STATUS_TYPES = {
 }
 
 
-export const Select: React.FC<SelectProps> = (props) => {
+export function Select({
+  initialValue = '',
+  // selected: initialSelection,
+  ...props
+}: SelectProps) {
 
   const { onInputChange, onSelectedChange } = props
 
-  const [value, setValue] = React.useState<string>(props.initialValue || '')
-  const [displayValue, setDisplayValue] = React.useState<string>(props.initialValue || '')
+  const [value, setValue] = React.useState<string>(initialValue)
+  const [displayValue, setDisplayValue] = React.useState<string>(initialValue)
   const [ghostValue, setGhostValue] = React.useState<string>('')
   const [options, setOptions] = React.useState<IOption[]>([])
   const [selected, setSelected] = React.useState<any>(props.selected || [])
@@ -253,7 +257,7 @@ export const Select: React.FC<SelectProps> = (props) => {
       setOptions([])
     }
     onSelectedChange && onSelectedChange(selected)
-  }, [selected, onSelectedChange])
+  }, [selected])
 
   // Generate our ghost suggestion value
   React.useEffect(() => {
@@ -692,5 +696,4 @@ Select.defaultProps = {
   className: '',
   chipsOffset: 8,
   isMulti: true,
-  initialValue: ''
 }
