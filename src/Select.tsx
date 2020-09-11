@@ -49,8 +49,8 @@ export const Select: React.FC<SelectProps> = (props) => {
 
   const { onInputChange, onSelectedChange } = props
 
-  const [value, setValue] = React.useState<string>('')
-  const [displayValue, setDisplayValue] = React.useState<string>(props.displayValue || '')
+  const [value, setValue] = React.useState<string>(props.initialValue || '')
+  const [displayValue, setDisplayValue] = React.useState<string>(props.initialValue || '')
   const [ghostValue, setGhostValue] = React.useState<string>('')
   const [options, setOptions] = React.useState<IOption[]>([])
   const [selected, setSelected] = React.useState<any>(props.selected || [])
@@ -692,5 +692,5 @@ Select.defaultProps = {
   className: '',
   chipsOffset: 8,
   isMulti: true,
-  displayValue: ''
+  initialValue: ''
 }
