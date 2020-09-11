@@ -50,7 +50,7 @@ export const Select: React.FC<SelectProps> = (props) => {
   const { onInputChange, onSelectedChange } = props
 
   const [value, setValue] = React.useState<string>('')
-  const [displayValue, setDisplayValue] = React.useState<string>('')
+  const [displayValue, setDisplayValue] = React.useState<string>(props.displayValue || '')
   const [ghostValue, setGhostValue] = React.useState<string>('')
   const [options, setOptions] = React.useState<IOption[]>([])
   const [selected, setSelected] = React.useState<any>(props.selected || [])
@@ -330,22 +330,33 @@ export const Select: React.FC<SelectProps> = (props) => {
 
     setSelected(nextSelected)
     
-  }, [selected, options])
+  }, [selected])
 
   const onClickOption = (item: any, index: number) => {
-    setOptions((prev) => prev.filter(({ name }) => item.name !== name))
-    setSelected((prev: any) => [...prev, options[index]])
+    const selectedOption = filteredOptons[index]
+    // setOptions((prev) => prev.filter(({ name }) => item.name !== name))
     
-    setTimeout(() => {
+      
+    if ( props.isMulti ) {
+      setSelected((prev: any) => [...prev, selectedOption])
+      setTimeout(() => {
+        setDisplayValue('')
+        setGhostValue('')
+      }, 0)
+    } else {
+      setSelected((prev: any) => [selectedOption])
       setDisplayValue('')
       setGhostValue('')
-    }, 0)
+      setDisplayValue(selectedOption.value)
+    }
 
     inputRef.current && inputRef.current.focus()
   }
   
   const onClearSelection = () => {
     setSelected([])
+    setValue('')
+    setDisplayValue('')
     inputRef.current && inputRef.current.focus()
   }
 
@@ -680,5 +691,6 @@ Select.defaultProps = {
   hideOptionsAfterSelection: true,
   className: '',
   chipsOffset: 8,
-  isMulti: true
+  isMulti: true,
+  displayValue: ''
 }

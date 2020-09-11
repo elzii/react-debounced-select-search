@@ -12,6 +12,7 @@ export function ClearSelection ({ item, className, style, onClick,...props }: Cl
   const classNames = cx('select-clear-selection', className)
   return <div className={classNames} style={style}>
     <button 
+      tabIndex={-1}
       onClick={onClick}
     >✕</button>
   </div>

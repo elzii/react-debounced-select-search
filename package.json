@@ -2,7 +2,7 @@
   "name": "@zizzo/react-debounced-select-search",
   "author": "Alexander Zizzo",
   "description": "Like react-select, but worse, yet easier to reason about.",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",

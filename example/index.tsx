@@ -30,7 +30,7 @@ const getCountries = async (term) => {
     {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${AIRTABLE_API_TOKEN}`
+        Authorization: `Bearer keytZIj8N0NSWK371`
       }
     }
   )
@@ -170,7 +170,14 @@ const CustomIconSearch = () => {
 
 
 const CountrySelect = () => {
-  const [selected, setSelected] = React.useState<any>([])
+  const [selected, setSelected] = React.useState<any>([
+    {
+      id: 'US',
+      value: 'US',
+      thumb: `https://svg-country-flags.s3.amazonaws.com/${'US'}.svg`,
+      name: 'United States'
+    }
+  ])
 
   const onSelectedChange = (s) => {
     console.log('onSelectedChange', s)
@@ -189,6 +196,7 @@ const CountrySelect = () => {
         selected={selected}
         placeholder={"Search countries"}
         onSelectedChange={onSelectedChange}
+        displayValue={'United States'}
         showSuggestion={false}
         tabBehavior={"SELECT_HIGHLIGHTED_OPTION"}
         debounceTimeout={200}
@@ -239,7 +247,7 @@ const LanguageSelect = () => {
         className={"CustomSelect"}
         style={{ marginBottom: "2rem" }}
         getOptions={getLanguages}
-        selected={selected}
+        // selected={selected}
         placeholder={"Search languages"}
         onSelectedChange={onSelectedChange}
         showSuggestion={false}

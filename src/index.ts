@@ -79,6 +79,7 @@ export interface SelectProps {
   chipsOffset?: number
   hideOptionsAfterSelection?: boolean
   isMulti?: boolean
+  displayValue: string
 }
 
 
