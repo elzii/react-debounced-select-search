@@ -6,6 +6,7 @@ import { css } from "emotion"
 import cx from "classnames"
 import * as querystring from "query-string"
 import Fuse from "fuse.js"
+import * as dotProp from 'dot-prop'
 
 
 import './index.css'
@@ -370,17 +371,10 @@ const ConfirmSelect = ({ ...props }:any) => {
       autoFocus={false}
       components={{
         IconSearch: ({ selected }: { selected: Array<any> }) => {
-          const styles: React.CSSProperties = {
-            width: 16,
-            height: 17,
-            position: 'relative',
-            top: 1
-          }
-          return <svg viewBox="0 0 24 24" fill="none" style={{
-            ...styles,
+          return <svg width="28" height="24" viewBox="0 0 28 24" fill="none" style={{
             opacity: selected.length ? 1 : 0.35
           }}>
-            <path fillRule="evenodd" clipRule="evenodd" d="M2 4V20H22V4H2ZM18.586 6L12 12.586L5.414 6H18.586ZM4 18V7.414L12 15.414L20 7.414V18H4Z" fill="black" fillOpacity="0.9"/>
+            <path d="M27 11H21.9C21.8 9.8 21.4 8.6 20.9 7.5C22.8 6 24 3.8 24 1.4V1C24 0.4 23.6 0 23 0C22.4 0 22 0.4 22 1V1.4C22 3.2 21.2 4.8 19.8 5.9C19.3 5.2 18.6 4.7 17.9 4.2C17.9 4.1 17.9 4.1 17.9 4C17.9 1.8 16.1 0 13.9 0C11.7 0 9.9 1.8 9.9 4C9.9 4.1 9.9 4.1 9.9 4.2C9.2 4.7 8.6 5.2 8 5.9C6.8 4.8 6 3.2 6 1.4V1C6 0.4 5.6 0 5 0C4.4 0 4 0.4 4 1V1.4C4 3.8 5.1 6.1 7.1 7.5C6.6 8.5 6.2 9.7 6.1 11H1C0.4 11 0 11.4 0 12C0 12.6 0.4 13 1 13H6.1C6.2 14.2 6.6 15.4 7.1 16.5C5.1 17.9 4 20.2 4 22.6V23C4 23.6 4.4 24 5 24C5.6 24 6 23.6 6 23V22.6C6 20.8 6.8 19.2 8.2 18.1C9.7 19.9 11.7 21 14 21C16.3 21 18.4 19.9 19.8 18.1C21.2 19.2 22 20.8 22 22.6V23C22 23.6 22.4 24 23 24C23.6 24 24 23.6 24 23V22.6C24 20.2 22.9 17.9 20.9 16.5C21.4 15.5 21.8 14.3 21.9 13H27C27.6 13 28 12.6 28 12C28 11.4 27.6 11 27 11Z" fill="black"/>
           </svg>
         },
         Option: ({ item, className, style, onClick,...props }) => {
@@ -524,7 +518,7 @@ const EmailSelect = ({ onSelect, ...props }:any) => {
 
   return <div>
     <p>
-      Search account
+      Try, ex: <code>432539860306755280</code> or <code>test@netflix.com</code>
     </p>
 
     <Select
@@ -533,7 +527,7 @@ const EmailSelect = ({ onSelect, ...props }:any) => {
       getOptions={getAccountByEmail}
       selected={selected}
       initialValue={initialValue}
-      placeholder={"Account email address"}
+      placeholder={"Email Address or Customer ID"}
       onSelectedChange={onSelectedChange}
       showSuggestion={false}
       tabBehavior={"SELECT_HIGHLIGHTED_OPTION"}
@@ -676,18 +670,21 @@ const ProfileSelect = ({ customerId, ...props }:any) => {
         Select profile
       </p>
       <Select
+        key={`select-${customerId}`}
         className={"CustomSelect"}
         style={{ marginBottom: '1rem' }}
         getOptions={async () => getProfiles(customerId)}
         selected={selected}
-        initialValue={selected.length ? selected[0].name : ''}
+        initialValue={(selected.length && selected[0]) ? selected[0].name : ''}
         placeholder={"Profile"}
         onSelectedChange={onSelectedChange}
         showSuggestion={false}
         tabBehavior={"SELECT_HIGHLIGHTED_OPTION"}
-        debounceTimeout={100}
+        debounceTimeout={200}
         isMulti={false}
         autoFocus={false}
+        alwaysShowOptionsOnFocus={true}
+        hideOptionsAfterSelection={true}
         components={{
           IconSearch: ({ selected }: { selected: Array<any> }) => {
             const styles: React.CSSProperties = {
@@ -741,16 +738,7 @@ const ProfileSelect = ({ customerId, ...props }:any) => {
   </div>
 }
 
-const CountrySelect = ({ components, selected: initialSelected = [], ...props }:any) => {
-  const [selected, setSelected] = React.useState<any>(initialSelected)
-
-  const onSelectedChange = (s) => {
-    console.log('onSelectedChange', s)
-    setSelected(s)
-  }
-
-  const initialValue = selected[0] ? selected[0].name : ''
-
+const CountrySelect = ({ initialValue = '', components, selected, ...props }:any) => {
   return (
     <div>
       <p>
@@ -762,7 +750,6 @@ const CountrySelect = ({ components, selected: initialSelected = [], ...props }:
         getOptions={getCountries}
         selected={selected}
         placeholder={"Search countries"}
-        onSelectedChange={onSelectedChange}
         initialValue={initialValue}
         showSuggestion={false}
         tabBehavior={"SELECT_HIGHLIGHTED_OPTION"}
@@ -903,11 +890,30 @@ const LanguageSelect = (props: any) => {
 
 const App = () => {
   const [account,setAccount] = React.useState<any>({})
+  const [country,setCountry] = React.useState<any>({
+    id: 'US',
+    value: 'US', 
+    name: 'United States',
+    thumb: `https://svg-country-flags.s3.amazonaws.com/${'US'}.svg`,
+  })
   const onSelectedChange = (x) => console.log("onSelectedChange", x)
   const onInputChange = (x) => console.log("onInputChange", x)
 
+
+
   return (
     <div className="App">
+
+      <button onClick={() => setCountry(({ 
+        id: 'IN',
+        value: 'IN', 
+        name: 'India',
+        thumb: `https://svg-country-flags.s3.amazonaws.com/${'IN'}.svg`,
+      }))}>
+        Update Country
+      </button>
+      <pre>{JSON.stringify(country, null, 2)}</pre>
+
       <div
         className={css`
           margin: 4rem auto;
@@ -1059,14 +1065,9 @@ const App = () => {
           onBlur={(event: any) => console.log('Blur')}
         />
         <CountrySelect 
-          selected={[
-            {
-              id: 'US',
-              value: 'US',
-              thumb: `https://svg-country-flags.s3.amazonaws.com/${'US'}.svg`,
-              name: 'United States'
-            }
-          ]}
+          selected={[country]}
+          onSelectedChange={() => console.log('Change country?')}
+          initialValue={country.name}
         />
         <CountrySelect 
           focusInputAfterRemovingSelectedItem={true}

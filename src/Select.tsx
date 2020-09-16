@@ -66,6 +66,7 @@ function SearchSelect({
   debugPortal = false,
   focusInputAfterRemovingSelectedItem = true,
   hideOptionsAfterSelection = false,
+  alwaysShowOptionsOnFocus = false,
   className = '',
   chipsOffset = 8,
   isMulti = true,
@@ -74,7 +75,7 @@ function SearchSelect({
   chip,
 
   ...props
-}: SelectProps) {
+}: SelectProps, forwardedRef: any) {
 
   const [value, setValue] = React.useState<string>(initialValue)
   const [displayValue, setDisplayValue] = React.useState<string>(initialValue)
@@ -103,6 +104,13 @@ function SearchSelect({
   React.useEffect(() => {
     log('⚛️ EFFECT', 'effect')('Mounted', props)
   }, [])
+
+  React.useEffect(() => {
+    if ( JSON.stringify(selected) !== JSON.stringify(selectedOptions) ) {
+      setSelectedOptions(selected)
+      setDisplayValue(selected[0]?.name)
+    }
+  }, [selected])
 
   const Components = React.useMemo(() => ({
     ...components,
@@ -254,13 +262,17 @@ function SearchSelect({
   React.useEffect(() => {
     scrollOptionIntoViewAsNeeded()
   }, [highlighted, scrollOptionIntoViewAsNeeded])
-
+ 
   // Fetch our options on the debounced value
   React.useEffect(() => {
     // TODO: Do we need this?
     // setHighlighted(null)
 
-    if (!!debouncedValue && (debouncedValue === displayValue) && focused) {
+    const fetchCondition = alwaysShowOptionsOnFocus
+      ? focused
+      : (!!debouncedValue && (debouncedValue === displayValue) && focused)
+
+    if (fetchCondition) {
 
       log('getOptions', 'request')(`Fetching, term is ${debouncedValue}`)
 
@@ -278,7 +290,7 @@ function SearchSelect({
 
     } else {
       if (hideOptionsAfterSelection || !isMulti) {
-        // setOptionsVisible(false)
+        setOptionsVisible(false)
         setOptions([])
         setHighlighted(null)
       } else {
