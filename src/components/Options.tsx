@@ -21,11 +21,11 @@ export const Option: React.FC<OptionProps> = ({ item, className, style, onClick,
           <div style={{ marginBottom: 2 }}>{item.name}</div>
         </div>
         <div style={{ fontSize: 12, opacity: 0.75, margin: '2px -4px' }}>
-            {
-              item.meta && (item.meta as any[]).map(({ value }, m) => {
-                return <span key={`meta-${m}`} style={{ margin: '0px 4px', padding: '1px 4px', backgroundColor: 'rgba(0,0,0,0.05)', borderRadius: 2 }}>{value}</span>
-              })
-            }                  
+          {
+            item.meta && (item.meta as any[]).map(({ value }, m) => {
+              return <span key={`meta-${m}`} style={{ margin: '0px 4px', padding: '1px 4px', backgroundColor: 'rgba(0,0,0,0.05)', borderRadius: 2 }}>{value}</span>
+            })
+          }
         </div>
       </div>
     </div>
