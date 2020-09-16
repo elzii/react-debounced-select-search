@@ -5,6 +5,9 @@ import { IconSearch } from './icons/Search.svg'
 import { IconDelete } from './icons/Delete.svg'
 import { Select } from './Select'
 export { createCSSTheme } from './Styles'
+import {
+  IChipCurrent,
+} from './components/Chips'
 
 export {
   Select,
@@ -62,6 +65,7 @@ export interface SelectProps {
   getOptions: (query: string) => Promise<any>
   onInputChange?: (value: string) => void
   onSelectedChange?: (value: string) => void
+  onOptionsChange?: (options: IOption[]) => void
   onSelect?: (item: any, selected: any[]) => void
   onFocus?: (event: any) => void
   onBlur?: (event: any) => void
@@ -82,6 +86,8 @@ export interface SelectProps {
   hideOptionsAfterSelection?: boolean
   isMulti?: boolean
   initialValue?: string
+  chip?: IOption
+  onRemoveChip?: (chip: any) => void
 }
 
 

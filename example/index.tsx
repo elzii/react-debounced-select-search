@@ -58,13 +58,160 @@ const getCountries = async (term) => {
       return {
         id,
         name: fields["Country Name"],
-        value: fields["Country Name"],
+        value: fields["Alpha 2"],
         thumb: `https://svg-country-flags.s3.amazonaws.com/${fields["Alpha 2"]}.svg`,
         meta: [{ value: fields["Alpha 2"] }, { value: fields["Alpha 3"] }]
       }
     })
 
   return data
+}
+
+const getProfilesByAccountEmail = async (term) => {
+  if (!term) return []
+
+  const t = term.toLowerCase()
+
+  const qs = querystring.stringify({
+    user: 'moriafigma',
+    lookup_key: t
+  })
+  const response = await fetch(
+    `https://argus.us-east-1.prod.netflix.com/WEB/customers/lookup?${qs}`,
+    {
+      method: "GET",
+    }
+  )
+  type ProfileInfoMap = {
+    [key: string]: any
+  }
+  interface ProfileMap {
+    addlProfileIdToProfileInfoMap: ProfileInfoMap,
+    customerId: string
+    customerNotFound?: string | 'true' | 'false'
+  }
+  const res: ProfileMap = await response.json()
+
+  if ( !res.customerNotFound ) {
+    const cid = res.customerId
+    let profileIcons: any[]
+
+    try {
+      const profileIconsResponse = await fetch(
+        `http://api-staging-internal.netflix.com/xd/profileIcons?customerId=${cid}`,
+        { method: 'GET' }
+      )
+      profileIcons = await profileIconsResponse.json()
+    } catch (ex) {
+      profileIcons = []
+      console.log('Failed getting icons, we can still display the names.')
+    }
+
+
+    return Object.entries(res.addlProfileIdToProfileInfoMap)
+      .map(([id, info]) => ({ id, ...info }))
+      .map(info => {
+        return {
+          thumb: profileIcons[info.id].iconAvatarUrls[0],
+          id: info.guid,
+          value: info.guid,
+          name: info.name,
+          meta: []
+        }
+      })
+  }
+  
+
+  return []
+}
+
+
+const getAccountByEmail = async (term) => {
+  if (!term) return []
+
+  const t = term.toLowerCase()
+
+  const qs = querystring.stringify({
+    user: 'moriafigma',
+    lookup_key: t
+  })
+  const response = await fetch(
+    `https://argus.us-east-1.prod.netflix.com/WEB/customers/lookup?${qs}`,
+    {
+      method: "GET",
+    }
+  )
+  type ProfileInfoMap = {
+    [key: string]: any
+  }
+  interface ProfileMap {
+    addlProfileIdToProfileInfoMap: ProfileInfoMap,
+    customerId: string
+    customerNotFound?: string | 'true' | 'false',
+    [key: string]: any
+  }
+  const res: ProfileMap = await response.json()
+
+  if ( !res.customerNotFound ) {
+    const account = res
+    return [
+      {
+        id: account.guid,
+        value: account.accountId,
+        name: term,
+        profileName: account.profileName,
+        meta: [
+          { id: account.profileName, value: account.profileName },
+          { id: account.accountId, value: account.accountId },
+        ]
+      }
+    ]
+
+  }
+  
+
+  return []
+}
+
+
+const getProfiles = async (cid) => {
+  if (!cid) return []
+
+  try {
+    const profileIconsResponse = await fetch(
+      `http://api-staging-internal.netflix.com/xd/profileIcons?customerId=${cid}`,
+      { method: 'GET' }
+    )
+    interface ProfileIcons {
+      [key: string]: {
+        "index": number,
+        "profileName": string,
+        "guid": string,
+        "customerId": string,
+        "isAccountOwner": boolean,
+        "isFirstUse": boolean,
+        "experience": string, // 'standard'
+        "iconAvatar": string,
+        "iconAvatarUrls": string[]
+      }
+    }
+    const profileIcons: ProfileIcons = await profileIconsResponse.json()
+
+    return Object.entries(profileIcons)
+      .map(([id, profile]) => ({ ...profile, customerId: id }))
+      .map(profile => {
+        return {
+          thumb: profile.iconAvatarUrls[0],
+          id: profile.guid,
+          value: profile.guid,
+          name: profile.profileName,
+          meta: []
+        }
+      })
+  } catch (ex) {
+    return []
+  }
+
 }
 
 const getLanguages = async (term) => {
@@ -133,6 +280,14 @@ const getLanguages = async (term) => {
   return data
 }
 
+const getSelf = async (query) => {
+  return [{
+    value: query,
+    name: query,
+    id: query
+  }]
+}
+
 const getCocktails = async (query) => {
   const url = `https://www.thecocktaildb.com/api/json/v1/1/search.php?s=${query}`
   const response = await fetch(url, {
@@ -141,6 +296,7 @@ const getCocktails = async (query) => {
   const data = await response.json()
 
   const { drinks } = data
+
   return drinks.map((item) => ({
     id: item.idDrink,
     name: item.strDrink,
@@ -151,6 +307,22 @@ const getCocktails = async (query) => {
       { id: "ingredient2", value: item.strIngredient2 },
       { id: "ingredient3", value: item.strIngredient3 }
     ].filter(({ value }) => !!value)
+  }))
+}
+const getWiki = async (term) => {
+  const url = `https://cors-anywhere.herokuapp.com/https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${term}&utf8=&format=json`
+  const response = await fetch(url, {
+    method: "GET"
+  })
+  const data = await response.json()
+
+  const { query } = data
+
+  return query.search.map((item) => ({
+    id: item.pageid,
+    name: item.title,
+    value: item.title,
+    snippet: item.snippet
   }))
 }
 
@@ -169,25 +341,408 @@ const CustomIconSearch = () => {
 
 
 
-const CountrySelect = () => {
-  const [selected, setSelected] = React.useState<any>([
-    {
-      id: 'US',
-      value: 'US',
-      thumb: `https://svg-country-flags.s3.amazonaws.com/${'US'}.svg`,
-      name: 'United States'
-    }
-  ])
 
-  const sel = React.useMemo(() => {
-    return [{
-      id: 'US',
-      value: "US",
-      thumb: `https://svg-country-flags.s3.amazonaws.com/${"US"}.svg`,
-      name: "United States",
-      ...selected
-    }]
-  }, [selected])
+const ConfirmSelect = ({ ...props }:any) => {
+
+  const [selected, setSelected] = React.useState<any>([])
+  const onSelectedChange = (s) => {
+    setSelected(s)
+  }
+  const initialValue = selected[0] ? selected[0].name : ''
+
+  return <div>
+    <p>
+      Email address intermediate by using <code>getSelf</code>
+    </p>
+
+    <Select
+      className={"CustomSelect"}
+      style={{ marginBottom: '1rem' }}
+      getOptions={getSelf}
+      selected={selected}
+      initialValue={initialValue}
+      placeholder={"Account email address"}
+      onSelectedChange={onSelectedChange}
+      showSuggestion={false}
+      tabBehavior={"SELECT_HIGHLIGHTED_OPTION"}
+      debounceTimeout={100}
+      isMulti={false}
+      autoFocus={false}
+      components={{
+        IconSearch: ({ selected }: { selected: Array<any> }) => {
+          const styles: React.CSSProperties = {
+            width: 16,
+            height: 17,
+            position: 'relative',
+            top: 1
+          }
+          return <svg viewBox="0 0 24 24" fill="none" style={{
+            ...styles,
+            opacity: selected.length ? 1 : 0.35
+          }}>
+            <path fillRule="evenodd" clipRule="evenodd" d="M2 4V20H22V4H2ZM18.586 6L12 12.586L5.414 6H18.586ZM4 18V7.414L12 15.414L20 7.414V18H4Z" fill="black" fillOpacity="0.9"/>
+          </svg>
+        },
+        Option: ({ item, className, style, onClick,...props }) => {
+           const classNames = cx('select-option', className)
+           return <div className={cx(classNames, css`padding-left:0.25rem !important;padding-right: 0.25rem !important;`)} onClick={onClick}>
+              <div className={css`
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                width: 100%;
+              `}>
+                <div style={{ marginBottom: 2 }}>{item.name}</div>
+                <div className={css`
+                  background: white;
+                  padding: 0.25rem 0.5rem;
+                  border-radius: 4px;
+                  font-size: 10px;
+                  color: #222;
+                `}>
+                  SUBMIT
+                </div>
+              </div>
+           </div>
+         },
+         // IconSearch: () => null,
+         // IconLoading: () => null,
+      }}
+    />
+  </div>
+}
+
+
+const ProfileSelectAccountSearchCombined = ({ ...props }:any) => {
+
+  const [selected, setSelected] = React.useState<any>([])
+  const [options, setOptions] = React.useState<any>([])
+  const [emailAddress, setEmailAddress] = React.useState<string>('')
+  const [chip, setChip] = React.useState<any>(null)
+  const onSelectedChange = (s) => {
+    setSelected(s)
+  }
+  const onInputChange = React.useCallback((value) => {
+    if ( selected.length <= 0 ) {
+      setEmailAddress(value)
+    }
+  }, [selected, emailAddress])
+
+  const getProfiles = React.useCallback(async (value) => {
+    if ( selected.length > 0 ) {
+      console.log('Change to using options', selected, options)
+      return options
+    }
+    return getProfilesByAccountEmail(value)
+  }, [selected, options])
+
+  React.useEffect(() => {
+    if ( selected.length >= 1 ) {
+      setChip({
+        id: emailAddress,
+        name: emailAddress,
+        value: emailAddress
+      })
+    }
+  }, [selected, emailAddress])
+
+  const initialValue = selected[0] ? selected[0].name : ''
+
+  // console.log('emailAddress', emailAddress)
+  // console.log('selected', selected)
+  // console.log('chip', chip)
+
+  return <div>
+    <p>
+      Search by email (combined)
+    </p>
+
+
+    <Select
+      className={"CustomSelect"}
+      style={{ marginBottom: '1rem' }}
+      getOptions={getProfiles}
+      onOptionsChange={(opts) => setOptions(opts)}
+      selected={selected}
+      initialValue={initialValue}
+      placeholder={"Account email address"}
+      onInputChange={onInputChange}
+      onSelectedChange={onSelectedChange}
+      showSuggestion={false}
+      tabBehavior={"SELECT_HIGHLIGHTED_OPTION"}
+      debounceTimeout={100}
+      isMulti={false}
+      autoFocus={false}
+      chip={chip}
+      // onRemoveChip={() => setChip(null)}
+      components={{
+        IconSearch: ({ selected }: { selected: Array<any> }) => {
+          const styles: React.CSSProperties = {
+            width: 16,
+            height: 17,
+            position: 'relative',
+            top: 1
+          }
+          return <svg viewBox="0 0 24 24" fill="none" style={{
+            ...styles,
+            // opacity: selected.length ? 1 : 0.35
+            opacity: 1
+          }}>
+            <path fillRule="evenodd" clipRule="evenodd" d="M2 4V20H22V4H2ZM18.586 6L12 12.586L5.414 6H18.586ZM4 18V7.414L12 15.414L20 7.414V18H4Z" fill="black" fillOpacity="0.9"/>
+          </svg>
+        },
+        Option: ({ item, className, style, onClick,...props }) => {
+           const classNames = cx('select-option', className)
+           return <div className={classNames} onClick={onClick}>
+             <div className="select-option__thumb-container">
+               <img className="select-option__thumb" src={item.thumb} alt="" />
+             </div>
+             <div>
+               <div>
+                 <div style={{ marginBottom: 2 }}>{item.name}</div>
+               </div>
+             </div>
+           </div>
+         },
+         // IconSearch: () => null,
+         // IconLoading: () => null,
+      }}
+    />
+  </div>
+}
+
+const EmailSelect = ({ onSelect, ...props }:any) => {
+
+  const [selected, setSelected] = React.useState<any>([])
+  
+  const onSelectedChange = (s) => {
+    setSelected(s)
+    onSelect && onSelect(s[0])
+  }
+  
+  const initialValue = selected[0] ? selected[0].name : ''
+
+  return <div>
+    <p>
+      Search account
+    </p>
+
+    <Select
+      className={"CustomSelect"}
+      style={{ marginBottom: '1rem' }}
+      getOptions={getAccountByEmail}
+      selected={selected}
+      initialValue={initialValue}
+      placeholder={"Account email address"}
+      onSelectedChange={onSelectedChange}
+      showSuggestion={false}
+      tabBehavior={"SELECT_HIGHLIGHTED_OPTION"}
+      debounceTimeout={200}
+      isMulti={false}
+      autoFocus={false}
+      components={{
+        IconSearch: ({ selected }: { selected: Array<any> }) => {
+          const styles: React.CSSProperties = {
+            width: 16,
+            height: 17,
+            position: 'relative',
+            top: 1
+          }
+          return <svg viewBox="0 0 24 24" fill="none" style={{
+            ...styles,
+            // opacity: selected.length ? 1 : 0.35
+            opacity: 1
+          }}>
+            <path fillRule="evenodd" clipRule="evenodd" d="M2 4V20H22V4H2ZM18.586 6L12 12.586L5.414 6H18.586ZM4 18V7.414L12 15.414L20 7.414V18H4Z" fill="black" fillOpacity="0.9"/>
+          </svg>
+        },
+        Option: ({ item, className, style, onClick,...props }) => {
+           const classNames = cx('select-option', className)
+           return <div className={classNames} onClick={onClick}>
+             <div>
+               <div style={{ marginBottom: '0.5rem' }}>{item.name}</div>
+               <div style={{ fontSize: 12, opacity: 0.75, margin: '2px -4px' }}>
+                 {
+                   item.meta && (item.meta as any[]).map(({ value }, m) => {
+                     return <span key={`meta-${m}`} style={{ margin: '0px 4px', padding: '1px 4px', backgroundColor: 'rgba(0,0,0,0.05)', borderRadius: 2 }}>{value}</span>
+                   })
+                 }
+               </div>
+             </div>
+           </div>
+         },
+         // IconSearch: () => null,
+         // IconLoading: () => null,
+      }}
+    />
+  </div>
+}
+
+
+const ProfileSelectAccountSearch = ({ ...props }:any) => {
+
+  const [selected, setSelected] = React.useState<any>([])
+  const onSelectedChange = (s) => {
+    setSelected(s)
+  }
+
+  const initialValue = selected[0] ? selected[0].name : ''
+
+  return <div>
+    <p>
+      Select profile after searching email
+    </p>
+    <Select
+      className={"CustomSelect"}
+      style={{ marginBottom: '1rem' }}
+      getOptions={getProfilesByAccountEmail}
+      selected={selected}
+      initialValue={initialValue}
+      placeholder={"Account email address"}
+      onSelectedChange={onSelectedChange}
+      showSuggestion={false}
+      tabBehavior={"SELECT_HIGHLIGHTED_OPTION"}
+      debounceTimeout={100}
+      isMulti={false}
+      autoFocus={false}
+      components={{
+        IconSearch: ({ selected }: { selected: Array<any> }) => {
+          const styles: React.CSSProperties = {
+            width: 16,
+            height: 17,
+            position: 'relative',
+            top: 1
+          }
+
+          if ( selected.length ) {
+            const { thumb } = selected[0]
+            return <img src={thumb} alt="" className={css`
+              width: 20px;
+              height: 20px;
+              border-radius: 50%;
+              left: 40%;
+            `} />
+          }
+          return <svg viewBox="0 0 24 24" fill="none" style={{
+            ...styles,
+            // opacity: selected.length ? 1 : 0.35
+            opacity: 1
+          }}>
+            <path fillRule="evenodd" clipRule="evenodd" d="M2 4V20H22V4H2ZM18.586 6L12 12.586L5.414 6H18.586ZM4 18V7.414L12 15.414L20 7.414V18H4Z" fill="black" fillOpacity="0.9"/>
+          </svg>
+        },
+        Option: ({ item, className, style, onClick,...props }) => {
+           const classNames = cx('select-option', className)
+           return <div className={classNames} onClick={onClick}>
+             <div className="select-option__thumb-container">
+               <img className="select-option__thumb" src={item.thumb} alt="" />
+             </div>
+             <div>
+               <div>
+                 <div style={{ marginBottom: 2 }}>{item.name}</div>
+               </div>
+             </div>
+           </div>
+         },
+         // IconSearch: () => null,
+         // IconLoading: () => null,
+      }}
+    />
+  </div>
+}
+
+
+const ProfileSelect = ({ customerId, ...props }:any) => {
+
+  const [selected, setSelected] = React.useState<any>([])
+  const [ready, setReady] = React.useState<boolean>(false)
+  
+  const onSelectedChange = (s) => {
+    setSelected(s)
+  }
+
+  React.useEffect(() => {
+    if ( customerId ) {
+      getProfiles(customerId)
+        .then(profiles => setSelected([profiles[0]]))
+        .then(() => setReady(true))
+    }
+  }, [customerId])
+
+  if ( ready ) {
+  
+    return <div>
+      <p>
+        Select profile
+      </p>
+      <Select
+        className={"CustomSelect"}
+        style={{ marginBottom: '1rem' }}
+        getOptions={async () => getProfiles(customerId)}
+        selected={selected}
+        initialValue={selected.length ? selected[0].name : ''}
+        placeholder={"Profile"}
+        onSelectedChange={onSelectedChange}
+        showSuggestion={false}
+        tabBehavior={"SELECT_HIGHLIGHTED_OPTION"}
+        debounceTimeout={100}
+        isMulti={false}
+        autoFocus={false}
+        components={{
+          IconSearch: ({ selected }: { selected: Array<any> }) => {
+            const styles: React.CSSProperties = {
+              width: 16,
+              height: 17,
+              position: 'relative',
+              top: 1
+            }
+
+            if ( selected.length ) {
+              const { thumb } = selected[0]
+              return <img src={thumb} alt="" className={css`
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                left: 40%;
+              `} />
+            }
+            return <svg viewBox="0 0 20 20" fill="none" style={{
+              width: 20,
+              height: 20
+            }}>
+              <circle cx="10" cy="10" r="10" fill="#E4E4E4"/>
+            </svg>
+
+          },
+          Option: ({ item, className, style, onClick,...props }) => {
+             const classNames = cx('select-option', className)
+             return <div className={classNames} onClick={onClick}>
+               <div className="select-option__thumb-container">
+                 <img className="select-option__thumb" src={item.thumb} alt="" />
+               </div>
+               <div>
+                 <div>
+                   <div style={{ marginBottom: 2 }}>{item.name}</div>
+                 </div>
+               </div>
+             </div>
+           },
+           // IconSearch: () => null,
+           // IconLoading: () => null,
+        }}
+      />
+    </div>
+  }
+
+  return <div>
+    <p>
+      Select profile
+    </p>
+  </div>
+}
+
+const CountrySelect = ({ components, selected: initialSelected = [], ...props }:any) => {
+  const [selected, setSelected] = React.useState<any>(initialSelected)
 
   const onSelectedChange = (s) => {
     console.log('onSelectedChange', s)
@@ -203,9 +758,9 @@ const CountrySelect = () => {
       </p>
       <Select
         className={"CustomSelect CustomSelectCountry"}
-        style={{ marginBottom: "2rem" }}
+        style={{ marginBottom: '1rem' }}
         getOptions={getCountries}
-        selected={sel}
+        selected={selected}
         placeholder={"Search countries"}
         onSelectedChange={onSelectedChange}
         initialValue={initialValue}
@@ -217,6 +772,7 @@ const CountrySelect = () => {
         hideOptionsAfterSelection={true}
         components={{
           IconSearch: ({ selected }) => {
+
             if ( selected.length ) {
               const { thumb } = selected[0]
               return <img src={thumb} alt="" className={css`
@@ -238,13 +794,15 @@ const CountrySelect = () => {
               )
             }
           },
+          ...(components ? components : {}),
         }}
+        {...props}
       />
     </div>
   )
 }
 
-const LanguageSelect = () => {
+const LanguageSelect = (props: any) => {
   const [selected, setSelected] = React.useState<any>([])
 
   const onSelectedChange = (s) => {
@@ -258,9 +816,9 @@ const LanguageSelect = () => {
       </p>
       <Select
         className={"CustomSelect"}
-        style={{ marginBottom: "2rem" }}
+        style={{ marginBottom: '1rem' }}
         getOptions={getLanguages}
-        // selected={selected}
+        selected={selected}
         placeholder={"Search languages"}
         onSelectedChange={onSelectedChange}
         showSuggestion={false}
@@ -332,16 +890,19 @@ const LanguageSelect = () => {
                </div>
              </div>
            }
-            
           
         }}
+        {...props}
       />
+
+      
     </div>
   )
 }
 
 
 const App = () => {
+  const [account,setAccount] = React.useState<any>({})
   const onSelectedChange = (x) => console.log("onSelectedChange", x)
   const onInputChange = (x) => console.log("onInputChange", x)
 
@@ -349,7 +910,9 @@ const App = () => {
     <div className="App">
       <div
         className={css`
-          margin-top: 5rem;
+          margin: 4rem auto;
+          padding: 0 2rem;
+
           .CustomSelect {
             width: 460px;
             --select-input-max-width: none;
@@ -407,14 +970,21 @@ const App = () => {
             height: 32px;
           }
         `}
-      >
+      > 
+        <div className={css`
+          display: grid;
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr 1fr;
+          grid-gap: 1rem;
+        `}>
+
         <div>
           <p>
             Try <code>Bloody</code> or <code>cai</code>
           </p>
           <Select
             className={"CustomSelect"}
-            style={{ marginBottom: "2rem" }}
+            style={{ marginBottom: '1rem' }}
             getOptions={getCocktails}
             placeholder={"Search cocktails"}
             selected={[]}
@@ -430,10 +1000,148 @@ const App = () => {
             autoFocus={false}
           />
         </div>
+        <div>
+          <p>
+            Search Wikipedia
+          </p>
+          <Select
+            className={"CustomSelect"}
+            style={{ marginBottom: '1rem' }}
+            getOptions={getWiki}
+            placeholder={"Search Wikipedia"}
+            selected={[]}
+            showSuggestion={true}
+            onSelectedChange={onSelectedChange}
+            onInputChange={onInputChange}
+            tabBehavior={"SELECT_SUGGESTED"}
+            debounceTimeout={200}
+            components={{
+              IconSearch: CustomIconSearch,
+              Option: ({ item, className, style, onClick,...props }) => {
+                const classNames = cx('select-option', className)
+                return <div className={classNames} onClick={onClick}>
+                  <div>
+                    <div>
+                      <div style={{ marginBottom: 2 }}>{item.name}</div>
+                      <div 
+                        className={css`
+                          font-size: 10px;
+                          opacity: 0.5;
+                          .searchmatch {
+                            font-weight: bold;
+                          }
+                        `}
+                        dangerouslySetInnerHTML={{
+                         __html: item.snippet
+                        }} 
+                      />
+                    </div>
+                  </div>
+                 </div>
+               },
+            }}
+            hideOptionsAfterSelection={false}
+            autoFocus={false}
+          />
+        </div>
+      </div>
+      <div className={css`
+        display: grid;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        grid-gap: 1rem;
+      `}>
 
-        <CountrySelect />
+        <CountrySelect 
+          components={{
+            ClearSelection: () => null
+          }}
+          onBlur={(event: any) => console.log('Blur')}
+        />
+        <CountrySelect 
+          selected={[
+            {
+              id: 'US',
+              value: 'US',
+              thumb: `https://svg-country-flags.s3.amazonaws.com/${'US'}.svg`,
+              name: 'United States'
+            }
+          ]}
+        />
+        <CountrySelect 
+          focusInputAfterRemovingSelectedItem={true}
+          components={{
+            IconSearch: null,
+            IconLoading: null,
+            Option: ({ item, className, style, onClick,...props }) => {
+              const classNames = cx('select-option', className)
+              return <div className={cx(classNames, css``)}>
+                {item.name}
+              </div>
+            }
+          }}
+        />
 
+      </div>
+
+      <div className={css`
+        display: grid;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        grid-gap: 1rem;
+      `}>
         <LanguageSelect />
+        <LanguageSelect 
+          initialValue={'English'}
+          selected={[{
+            "id": "recaSEiPRVC2QCYuS",
+            "name": "English",
+            "value": "English",
+            "meta": [
+              {
+                "id": "code",
+                "value": "en"
+              },
+              {
+                "id": "native",
+                "value": "English"
+              }
+            ]
+          }]}
+        />
+
+        </div>
+
+        <div className={css`
+          display: grid;
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr 1fr;
+          grid-gap: 1rem;
+        `}>
+          <ConfirmSelect />
+        </div>
+
+        <div className={css`
+          display: grid;
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr 1fr;
+          grid-gap: 1rem;
+        `}>
+          <ProfileSelectAccountSearchCombined />
+          <ProfileSelectAccountSearch />
+          
+        </div>
+
+        <div className={css`
+          display: grid;
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr 1fr;
+          grid-gap: 1rem;
+        `}>
+          <EmailSelect onSelect={option => setAccount(option)}/>
+          <ProfileSelect customerId={!!account ? account.value : ''}/>
+        </div>
+
       </div>
     </div>
   )

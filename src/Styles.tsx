@@ -53,7 +53,8 @@ export const Styles = styled('div')`
     padding-top: var(--select-input-padding);
     padding-bottom: var(--select-input-padding);
     padding-right: var(--select-input-padding);
-    padding-left: var(--select-input-icon-container-width);
+    // padding-left: var(--select-input-icon-container-width);
+    padding-left: var(--select-input-padding);
     font-size: var(--select-input-font-size);
     // width: var(--select-input-max-width);
     color: var(--select-input-font-color);

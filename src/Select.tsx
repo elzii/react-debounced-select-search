@@ -45,13 +45,15 @@ export const STATUS_TYPES = {
 }
 
 
-export function Select({
+function SearchSelect({
   initialValue = '',
   autoFocus = false,
   debounceTimeout = 200,
   debounce = true,
   onSelectedChange,
   onInputChange,
+  onOptionsChange,
+  
   onBlur,
   onFocus,
   
@@ -69,6 +71,7 @@ export function Select({
   isMulti = true,
   placeholder = '',
   selected = [],
+  chip,
 
   ...props
 }: SelectProps) {
@@ -89,7 +92,7 @@ export function Select({
   let optionsContainerRef = React.createRef<HTMLInputElement>()
 
   useOnClickOutside(optionsContainerRef, () => {
-    // setOptions([])
+    // Do nothing
   })
 
   let chipsRef = React.createRef<HTMLDivElement>()
@@ -100,6 +103,11 @@ export function Select({
   React.useEffect(() => {
     log('⚛️ EFFECT', 'effect')('Mounted', props)
   }, [])
+
+  const Components = React.useMemo(() => ({
+    ...components,
+    ...props.components
+  }), [])
 
   const chips = React.useMemo(() => {
     
@@ -153,10 +161,16 @@ export function Select({
     return selectedOptions.length > 0 ? selectedOptions.map((s: any) => s.value) : []
   }, [selectedOptions])
 
+  const selectedOptionNames = React.useMemo(() => {
+    return selectedOptions.length > 0 ? selectedOptions.map((s: any) => s.name) : []
+  }, [selectedOptions])
+
   const filteredOptions = React.useMemo(() => {
-    const filtered = options.filter(({ value }) => selectedOptionValues.indexOf(value) === -1)
+    const filtered = isMulti
+      ? options.filter(({ value }) => selectedOptionValues.indexOf(value) === -1)
+      : options
     return filtered
-  }, [options, selectedOptionValues])
+  }, [options, selectedOptionValues, isMulti])
 
   // const filterOptionsByUnselectedNames = React.useMemo(() => {
   //   return options.filter(({ name }) => !selectedOptionNames.includes(name.toLowerCase()))
@@ -175,7 +189,11 @@ export function Select({
 
     let xOffset = rect.x - parentRect.x
 
-    setChipsWidth(rect.width + (xOffset - (chipsOffset ? chipsOffset : 0)))
+    if ( Components.IconSearch !== null ) {
+      setChipsWidth(rect.width + (xOffset - (chipsOffset ? chipsOffset : 0)))  
+    } else {
+      
+    }
   }, [chipsRef])
 
   const getSuggestedValue = React.useCallback(() => {
@@ -242,7 +260,7 @@ export function Select({
     // TODO: Do we need this?
     // setHighlighted(null)
 
-    if (debouncedValue && focused) {
+    if (!!debouncedValue && (debouncedValue === displayValue) && focused) {
 
       log('getOptions', 'request')(`Fetching, term is ${debouncedValue}`)
 
@@ -259,27 +277,23 @@ export function Select({
         })
 
     } else {
-      log('⚛️ EFFECT', 'effect')('No input value, clear options')
       if (hideOptionsAfterSelection || !isMulti) {
-        setOptionsVisible(false)
+        // setOptionsVisible(false)
+        setOptions([])
+        setHighlighted(null)
       } else {
         console.log('Keep the options open')
       }
     }
-  }, [debouncedValue, focused, props.getOptions])
+  }, [debouncedValue, displayValue, focused, props.getOptions])
 
 
 
-  // React.useEffect(() => {
-  //   log('⚛️ EFFECT', 'effect')('Clear options as needed')
-  //   if ( displayValue === '' ) {
-  //     setOptionsVisible(false)
-  //     setOptions([])
-  //     if ( !isMulti ) {
-  //       setSelectedOptions([])
-  //     }
-  //   }
-  // }, [displayValue, isMulti])
+  React.useEffect(() => {
+    if ( filteredOptions.length ) {
+      onOptionsChange && onOptionsChange(filteredOptions)
+    }
+  }, [filteredOptions])
 
 
   React.useEffect(() => {
@@ -309,9 +323,10 @@ export function Select({
       setValue(val)
       
       if ( val === '' && !isMulti ) {
-        setOptionsVisible(false)
+        // setOptionsVisible(false)
         setOptions([])
-        setSelectedOptions([])
+        // TODO: Should only clear these if not have a value is a valid state...
+        // setSelectedOptions([])
       }
     },
     [onInputChange, setValue, setDisplayValue, isMulti]
@@ -319,6 +334,8 @@ export function Select({
   const handleFocus = React.useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       setFocused(true)
+      setOptionsVisible(true)
+
       onFocus && onFocus(event)
     },
     []
@@ -327,9 +344,21 @@ export function Select({
   const handleBlur = React.useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       setFocused(false)
+      setOptionsVisible(false)
+
+      // If we didnt change the selection, and its not a multiselect,
+      // restore the last display value
+      if ( !isMulti && displayValue !== selectedOptionNames ) {
+        setDisplayValue(selectedOptionNames)
+      }
+
+      if ( isMulti ) {
+        setOptions([])
+      }
+
       onBlur && onBlur(event)
     },
-    []
+    [displayValue, selectedOptionNames, isMulti]
   )
 
   // const onRemoveSelectedOptionByIndex = (index: number) => {
@@ -387,12 +416,17 @@ export function Select({
     setValue('')
     setDisplayValue('')
 
-    inputRef.current && inputRef.current.focus()
+    inputRef.current?.focus()
   }, [])
 
   
 
   const navigateOptionsList = React.useCallback((direction: NavigationDirection) => {
+
+    if ( filteredOptions.length === 1 ) {
+      return 
+    }
+
     switch(direction) {
       case 'up': {
 
@@ -454,6 +488,7 @@ export function Select({
 
     switch (event.keyCode) {
       case KEY_CODES.ESCAPE: {
+        setOptionsVisible(false)
         break;
       }
       case KEY_CODES.UP: {
@@ -474,7 +509,7 @@ export function Select({
         log('ENTER', 'key')(index, filteredOptions)
 
         if (index !== null && filteredOptions.length > 0) {
-          setSelectedOptions((prev: any) => [...prev, filteredOptions[index]])
+          setSelectedOptions(() => [filteredOptions[index]])
           setValue('')
           setDisplayValue(filteredOptions[index].name)
 
@@ -642,10 +677,7 @@ export function Select({
   }, [highlighted, setSelectedOptions, suggestedValue, filteredOptions])
 
 
-  const Components = React.useMemo(() => ({
-    ...components,
-    ...props.components
-  }), [])
+  
 
   // console.count('Rendered')
 
@@ -653,7 +685,6 @@ export function Select({
   return (
     <Styled>
     <div className={cx('select', className)} style={{ ...props.style }}>
-
 
       <div className="select-input-container">
         <Components.ClearSelection 
@@ -678,6 +709,20 @@ export function Select({
               />
             </>
           }
+          {
+            !!chip && <>
+              <Components.Chips
+                chips={[{
+                  type: 'current',
+                  items: [chip]
+                }]}
+                // onRemove={onRemoveSelectedOptionByIndex}
+                onRemove={() => props.onRemoveChip && props.onRemoveChip(chip)}
+                onReorder={() => null}
+                selected={[]}
+              />
+            </>
+          }
         </div>
 
         <div className="select-icon-container">
@@ -685,13 +730,17 @@ export function Select({
             className="select-icon"
             style={{ opacity: status === 'LOADING' ? 1 : 0 }}
           >
-            <Components.IconLoading />
+            {
+              Components.IconLoading && <Components.IconLoading />
+            }
           </div>
           <div
             className="select-icon"
             style={{ opacity: status === 'LOADING' ? 0 : 1 }}
           >
-            <Components.IconSearch selected={selectedOptions} />
+            {
+              Components.IconSearch && <Components.IconSearch selected={selectedOptions} />
+            }
           </div>
         </div>
         <input
@@ -706,7 +755,7 @@ export function Select({
           autoComplete="disabled" // Chrome ignores "off" and false
           spellCheck={false}
           style={{
-            paddingLeft: chipsWidth,
+            ...(!!Components.IconSearch ? { paddingLeft: chipsWidth } : {}),
           }}
         />
         <input
@@ -718,7 +767,7 @@ export function Select({
           placeholder={placeholder}
           onChange={handleChange}
           onFocus={handleFocus}
-          // onBlur={handleBlur}
+          onBlur={handleBlur}
           onKeyDown={isMulti ? onKeyDownMulti : onKeyDownSingle}
           autoFocus={autoFocus}
           value={displayValue}
@@ -727,7 +776,7 @@ export function Select({
           autoComplete="disabled" // Chrome ignores "off" and false
           spellCheck={false}
           style={{
-            paddingLeft: chipsWidth,
+            ...(!!Components.IconSearch ? { paddingLeft: chipsWidth } : {})
           }}
         />
       </div>
@@ -768,3 +817,6 @@ export function Select({
   )
 }
 
+
+
+export const Select = React.forwardRef(SearchSelect)
