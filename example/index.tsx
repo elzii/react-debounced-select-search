@@ -31,7 +31,7 @@ const getCountries = async (term) => {
     {
       method: "GET",
       headers: {
-        Authorization: `Bearer keytZIj8N0NSWK371`
+        Authorization: `Bearer <YOUR_AIRTABLE_ACCESS_TOKEN>`
       }
     }
   )
